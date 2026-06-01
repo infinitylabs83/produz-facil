@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx kill-port *)",
+      "Bash(npm run *)",
+      "Read(//c/Users/user/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/7eed4d01-caba-4ce1-99f2-5d6039413744/976ebbfa-962e-4017-ad21-4621b0ba475f/skills/xlsx/**)",
+      "Bash(python -c ' *)",
+      "Bash(npx --version)",
+      "Bash(npx -y @elevenlabs/elevenlabs-mcp --version)",
+      "WebFetch(domain:elevenlabs.io)",
+      "Bash(pip --version)",
+      "WebFetch(domain:github.com)",
+      "mcp__mcp-registry__list_connectors",
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git remote *)"
+    ]
+  }
+}
