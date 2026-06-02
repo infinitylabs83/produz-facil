@@ -107,11 +107,13 @@ function FormBeta() {
     })
     if (error) { setEnviando(false); setErro('Erro ao enviar. Tente pelo WhatsApp.'); return }
 
-    // 2. Envia magic link por e-mail (funciona independente do "Confirm email" do Supabase)
-    const { error: otpError } = await supabase.auth.signInWithOtp({
+    // 2. Cria conta no Supabase Auth com senha temporária aleatória
+    // Isso dispara o e-mail "Confirm sign up" com o template personalizado — igual ao Loveable
+    const senhaTemp = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase() + '!9'
+    const { error: signUpError } = await supabase.auth.signUp({
       email: form.email,
+      password: senhaTemp,
       options: {
-        shouldCreateUser: true,
         emailRedirectTo: `${window.location.origin}/login`,
         data: { nome: form.nome },
       },
@@ -119,10 +121,17 @@ function FormBeta() {
 
     setEnviando(false)
 
-    if (otpError) {
-      // Mostra o erro real para facilitar diagnóstico
-      setErro(`Erro ao enviar e-mail: ${otpError.message}. Tente pelo WhatsApp.`)
-      return
+    if (signUpError) {
+      // Usuário já cadastrado — envia novo link de confirmação via OTP
+      if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('user already')) {
+        await supabase.auth.signInWithOtp({
+          email: form.email,
+          options: { emailRedirectTo: `${window.location.origin}/login` },
+        })
+      } else {
+        setErro(`Erro ao enviar e-mail: ${signUpError.message}. Tente pelo WhatsApp.`)
+        return
+      }
     }
 
     setEnviado(true)
