@@ -30,38 +30,60 @@ function ModalCriarAcesso({ lead, empresaId, onFechar, onSucesso }) {
   async function criar(e) {
     e.preventDefault()
     setErro('')
-    if (senha.length < 8) { setErro('A senha deve ter pelo menos 8 caracteres.'); return }
-    if (senha !== confirmar) { setErro('As senhas não conferem.'); return }
-
     setCriando(true)
 
-    // 1. Cria o usuário no Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: lead.email,
-      password: senha,
-      options: {
-        data: { nome: lead.nome },
-        emailRedirectTo: `${window.location.origin}/produz-facil/login`,
-      }
-    })
+    let userId = null
 
-    if (authError) {
+    // Tenta criar o usuário no Supabase Auth
+    if (senha) {
+      if (senha.length < 8) { setCriando(false); setErro('A senha deve ter pelo menos 8 caracteres.'); return }
+      if (senha !== confirmar) { setCriando(false); setErro('As senhas não conferem.'); return }
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: lead.email,
+        password: senha,
+        options: { data: { nome: lead.nome } },
+      })
+
+      if (authError) {
+        // Usuário já existe no auth (veio pelo magic link da landing page)
+        if (authError.message.toLowerCase().includes('already registered') || authError.message.toLowerCase().includes('already been registered')) {
+          // Busca o ID via função SQL (ver instruções abaixo)
+          const { data: idData } = await supabase.rpc('get_user_id_by_email', { user_email: lead.email })
+          userId = idData
+        } else {
+          setCriando(false)
+          setErro('Erro ao criar conta: ' + authError.message)
+          return
+        }
+      } else {
+        userId = authData.user?.id
+      }
+    } else {
+      // Sem senha: envia novo magic link e busca ID existente
+      await supabase.auth.signInWithOtp({
+        email: lead.email,
+        options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/login` },
+      })
+      const { data: idData } = await supabase.rpc('get_user_id_by_email', { user_email: lead.email })
+      userId = idData
+    }
+
+    if (!userId) {
       setCriando(false)
-      setErro('Erro ao criar conta: ' + authError.message)
+      setErro('Não foi possível obter o ID do usuário. Execute a função SQL conforme as instruções.')
       return
     }
 
-    // 2. Insere perfil na tabela usuarios
-    if (authData.user) {
-      await supabase.from('usuarios').insert({
-        id: authData.user.id,
-        empresa_id: empresaId,
-        perfil,
-        nome: lead.nome,
-      })
-    }
+    // Insere ou atualiza perfil na tabela usuarios
+    await supabase.from('usuarios').upsert({
+      id: userId,
+      empresa_id: empresaId,
+      perfil,
+      nome: lead.nome,
+    })
 
-    // 3. Marca o lead como convertido
+    // Marca o lead como convertido
     await supabase.from('leads')
       .update({ convertido: true, acesso_criado_em: new Date().toISOString() })
       .eq('id', lead.id)
@@ -93,21 +115,23 @@ function ModalCriarAcesso({ lead, empresaId, onFechar, onSucesso }) {
             </select>
           </div>
           <div className="campo-grupo" style={{ marginBottom: 0 }}>
-            <label>Senha inicial</label>
-            <input type="password" placeholder="Mínimo 8 caracteres" value={senha} onChange={e => setSenha(e.target.value)} required />
-            <span className="ajuda">O usuário poderá alterar depois pelo perfil.</span>
+            <label>Senha inicial <span style={{ fontWeight: 400, color: 'var(--cor-texto-suave)' }}>(opcional)</span></label>
+            <input type="password" placeholder="Deixe em branco para enviar link de acesso" value={senha} onChange={e => setSenha(e.target.value)} />
+            <span className="ajuda">Se definir senha, o usuário entra com e-mail + senha. Se deixar em branco, enviamos um link de acesso por e-mail.</span>
           </div>
-          <div className="campo-grupo" style={{ marginBottom: 0 }}>
-            <label>Confirmar senha</label>
-            <input type="password" placeholder="Repita a senha" value={confirmar} onChange={e => setConfirmar(e.target.value)} required />
-          </div>
+          {senha && (
+            <div className="campo-grupo" style={{ marginBottom: 0 }}>
+              <label>Confirmar senha</label>
+              <input type="password" placeholder="Repita a senha" value={confirmar} onChange={e => setConfirmar(e.target.value)} />
+            </div>
+          )}
 
           <div style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: '8px', padding: '12px 14px', fontSize: '0.82rem', color: 'var(--cor-texto-suave)', lineHeight: 1.6 }}>
-            📧 O Supabase enviará um <strong>e-mail de confirmação</strong> para <strong>{lead.email}</strong> com um link para ativar a conta. Depois de confirmar o e-mail, o usuário já pode acessar o app com a senha definida aqui.
+            📧 Um e-mail será enviado para <strong>{lead.email}</strong> com o link de acesso.
           </div>
 
           <button className="btn btn-primario" type="submit" disabled={criando} style={{ width: '100%' }}>
-            {criando ? '⏳ Criando acesso...' : '✅ Criar acesso e enviar convite'}
+            {criando ? '⏳ Criando acesso...' : '✅ Criar acesso e enviar e-mail'}
           </button>
         </form>
       </div>

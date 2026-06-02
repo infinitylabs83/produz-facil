@@ -51,7 +51,7 @@ function ConfirmacaoInscricao({ nome }) {
         {primeiroNome}, sua vaga está garantida!
       </div>
       <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '16px' }}>
-        Recebemos sua inscrição. Em breve você receberá um e-mail com o acesso.
+        Enviamos um <strong style={{ color: '#f1f5f9' }}>link de acesso para o seu e-mail</strong>. Clique nele para confirmar sua inscrição e entrar no sistema.
       </p>
 
       {/* Aviso spam */}
@@ -65,7 +65,7 @@ function ConfirmacaoInscricao({ nome }) {
       {/* Próximos passos */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '28px' }}>
         {[
-          { n: '1', emoji: '📧', titulo: 'Verifique seu e-mail', desc: 'Você receberá um e-mail com o link de acesso em até 24h. Não esqueça de checar a caixa de spam ou lixo eletrônico — às vezes ele cai por lá!' },
+          { n: '1', emoji: '📧', titulo: 'Clique no link no e-mail', desc: 'Acabamos de enviar um link de acesso para o seu e-mail. Clique nele para confirmar e entrar. Não chegou? Confira o spam.' },
           { n: '2', emoji: '📱', titulo: 'Entre no grupo beta', desc: 'Você receberá o link do grupo exclusivo de beta testadores no WhatsApp.' },
           { n: '3', emoji: '🚀', titulo: 'Acesse e explore', desc: 'Use o sistema por 30 dias gratuitamente e registre suas primeiras produções.' },
           { n: '4', emoji: '💬', titulo: 'Dê seu feedback', desc: 'A cada 15 dias enviaremos um formulário rápido. Seu feedback molda o produto.' },
@@ -98,13 +98,33 @@ function FormBeta() {
     e.preventDefault()
     setErro('')
     setEnviando(true)
+
+    // 1. Salva o lead na tabela
     const { error } = await supabase.from('leads').insert({
       nome: form.nome, email: form.email,
       whatsapp: form.whatsapp, restaurante: form.restaurante,
       origem: 'landing_beta',
     })
+    if (error) { setEnviando(false); setErro('Erro ao enviar. Tente pelo WhatsApp.'); return }
+
+    // 2. Envia magic link por e-mail (funciona independente do "Confirm email" do Supabase)
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: form.email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/login`,
+        data: { nome: form.nome },
+      },
+    })
+
     setEnviando(false)
-    if (error) { setErro('Erro ao enviar. Tente pelo WhatsApp.'); return }
+
+    if (otpError) {
+      // Mostra o erro real para facilitar diagnóstico
+      setErro(`Erro ao enviar e-mail: ${otpError.message}. Tente pelo WhatsApp.`)
+      return
+    }
+
     setEnviado(true)
   }
 
