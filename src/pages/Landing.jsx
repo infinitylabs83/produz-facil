@@ -50,14 +50,22 @@ function ConfirmacaoInscricao({ nome }) {
       <div style={{ fontWeight: 800, fontSize: '1.4rem', color: '#22c55e', marginBottom: '8px' }}>
         {primeiroNome}, sua vaga está garantida!
       </div>
-      <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '28px' }}>
-        Recebemos sua inscrição. Aqui estão os seus próximos passos:
+      <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '16px' }}>
+        Recebemos sua inscrição. Em breve você receberá um e-mail com o acesso.
       </p>
+
+      {/* Aviso spam */}
+      <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '10px', padding: '12px 16px', marginBottom: '24px', display: 'flex', gap: '10px', alignItems: 'flex-start', textAlign: 'left' }}>
+        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>⚠️</span>
+        <div style={{ fontSize: '0.85rem', color: '#fcd34d', lineHeight: 1.6 }}>
+          <strong>Verifique o spam!</strong> Nosso e-mail pode cair na caixa de spam ou no lixo eletrônico. Se não aparecer na caixa de entrada em alguns minutos, confira lá.
+        </div>
+      </div>
 
       {/* Próximos passos */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '28px' }}>
         {[
-          { n: '1', emoji: '📧', titulo: 'Verifique seu e-mail', desc: 'Enviaremos suas credenciais de acesso em até 24h. Confira também a caixa de spam.' },
+          { n: '1', emoji: '📧', titulo: 'Verifique seu e-mail', desc: 'Você receberá um e-mail com o link de acesso em até 24h. Não esqueça de checar a caixa de spam ou lixo eletrônico — às vezes ele cai por lá!' },
           { n: '2', emoji: '📱', titulo: 'Entre no grupo beta', desc: 'Você receberá o link do grupo exclusivo de beta testadores no WhatsApp.' },
           { n: '3', emoji: '🚀', titulo: 'Acesse e explore', desc: 'Use o sistema por 30 dias gratuitamente e registre suas primeiras produções.' },
           { n: '4', emoji: '💬', titulo: 'Dê seu feedback', desc: 'A cada 15 dias enviaremos um formulário rápido. Seu feedback molda o produto.' },
