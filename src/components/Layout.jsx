@@ -9,6 +9,7 @@ export default function Layout({ children }) {
   const [darkMode, setDarkMode] = useState(false)
   const [logoUrl, setLogoUrl]   = useState(null)
   const [nomeEmpresa, setNomeEmpresa] = useState('')
+  const [leadsNovos, setLeadsNovos] = useState(0)
 
   // Inicializa o tema salvo
   useEffect(() => {
@@ -33,6 +34,13 @@ export default function Layout({ children }) {
     }
     carregarEmpresa()
   }, [user])
+
+  // Conta leads sem acesso criado (só para gestor)
+  useEffect(() => {
+    if (perfil !== 'gestor') return
+    supabase.from('leads').select('id', { count: 'exact' }).eq('convertido', false)
+      .then(({ count }) => setLeadsNovos(count || 0))
+  }, [perfil])
 
   function toggleDarkMode() {
     const novoTema = !darkMode
@@ -85,6 +93,16 @@ export default function Layout({ children }) {
               <NavLink to="/configuracoes" className={({ isActive }) => isActive ? 'ativo' : ''}>
                 ⚙️ Configurações
               </NavLink>
+              {perfil === 'gestor' && (
+                <NavLink to="/leads" className={({ isActive }) => isActive ? 'ativo' : ''} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>🎯 Leads Beta</span>
+                  {leadsNovos > 0 && (
+                    <span style={{ background: '#f97316', color: 'white', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', minWidth: '20px', textAlign: 'center' }}>
+                      {leadsNovos}
+                    </span>
+                  )}
+                </NavLink>
+              )}
             </>
           )}
 

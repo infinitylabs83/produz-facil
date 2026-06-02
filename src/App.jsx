@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminCadastros from './pages/AdminCadastros'
 import Historico from './pages/Historico'
 import Configuracoes from './pages/Configuracoes'
+import Leads from './pages/Leads'
 
 function RotaProtegida({ children, perfisPermitidos }) {
   const { user, perfil, loading } = useAuth()
@@ -60,6 +61,12 @@ export default function App() {
       <Route path="/configuracoes" element={
         <RotaProtegida perfisPermitidos={['administrativo', 'gestor']}>
           <Layout><Configuracoes /></Layout>
+        </RotaProtegida>
+      } />
+
+      <Route path="/leads" element={
+        <RotaProtegida perfisPermitidos={['gestor']}>
+          <Layout><Leads /></Layout>
         </RotaProtegida>
       } />
 
