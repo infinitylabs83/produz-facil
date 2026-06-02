@@ -467,67 +467,36 @@ tr:hover td {
 
 /* ===== RESPONSIVO — MOBILE ===== */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    flex-direction: row;
-    padding: 0;
-    overflow-x: auto;
-  }
-
-  .sidebar-logo { display: none; }
-  .sidebar-footer { display: none; }
-
-  .sidebar-nav {
-    flex-direction: row;
-    padding: 8px;
-    gap: 4px;
-  }
-
-  .sidebar-nav a,
-  .sidebar-nav button {
-    padding: 10px 14px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-  }
-
-  .app-layout {
-    flex-direction: column;
-  }
-
-  .conteudo-principal {
-    margin-left: 0;
-    padding: 12px;
-  }
+  /* O layout mobile agora é gerenciado pelo Layout.jsx (top bar + bottom tabs) */
+  /* Estas regras cobrem elementos internos das páginas */
 
   .grid-metricas {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
-  /* Cabeçalho de página — empilha verticalmente */
   .pagina-cabecalho {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
 
-  /* Grids de duas colunas → coluna única */
+  .pagina-titulo {
+    font-size: 1.2rem;
+  }
+
   .grid-2col-mobile {
     grid-template-columns: 1fr !important;
   }
 
-  /* Wizard de produção — pesos e ingredientes empilhados */
   .wizard-producao-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Cadastros — lista + detalhe empilhados */
   .cadastros-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Tabelas — scroll horizontal */
   .tabela-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -537,29 +506,41 @@ tr:hover td {
     min-width: 500px;
   }
 
-  /* Cards do panorama — empilhar top3 */
   .panorama-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Select e busca de insumo full width */
   .select-padrao {
     width: 100%;
   }
 
-  /* Card wizard mais compacto */
   .wizard-container {
     max-width: 100%;
   }
 
-  /* Botões de navegação do wizard */
   .wizard-navegacao {
     flex-direction: column;
   }
 
-  /* Ranking tabela — esconde colunas menos importantes */
   .col-esconder-mobile {
     display: none;
+  }
+
+  /* Card e formulários mais compactos */
+  .card {
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .btn-grande {
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+
+  .campo-grupo input,
+  .campo-grupo select,
+  .campo-grupo textarea {
+    font-size: 16px; /* evita zoom automático no iOS */
   }
 }
 

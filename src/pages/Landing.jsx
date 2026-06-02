@@ -109,12 +109,15 @@ function FormBeta() {
 
     // 2. Cria conta no Supabase Auth com senha temporária aleatória
     // Isso dispara o e-mail "Confirm sign up" com o template personalizado — igual ao Loveable
+    // BASE_URL = '/produz-facil/' em produção, '/' em dev
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+    const redirectUrl = `${window.location.origin}${base}/login`
     const senhaTemp = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase() + '!9'
     const { error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: senhaTemp,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: redirectUrl,
         data: { nome: form.nome },
       },
     })
@@ -126,7 +129,7 @@ function FormBeta() {
       if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('user already')) {
         await supabase.auth.signInWithOtp({
           email: form.email,
-          options: { emailRedirectTo: `${window.location.origin}/login` },
+          options: { emailRedirectTo: redirectUrl },
         })
       } else {
         setErro(`Erro ao enviar e-mail: ${signUpError.message}. Tente pelo WhatsApp.`)
@@ -289,7 +292,7 @@ export default function Landing() {
           <h2 style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 800, textAlign: 'center', marginBottom: '48px' }}>
             A diferença que o controle real faz
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
             {/* Antes */}
             <div style={{ background: 'rgba(239,68,68,0.07)', border: '2px solid rgba(239,68,68,0.3)', borderRadius: '16px', padding: '28px' }}>
               <div style={{ fontWeight: 800, fontSize: '1rem', color: '#ef4444', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
