@@ -104,7 +104,21 @@ export default function Layout({ children }) {
             <NavLink to="/historico"    className={({ isActive }) => isActive ? 'ativo' : ''}>📅 Histórico</NavLink>
             <NavLink to="/cadastros"    className={({ isActive }) => isActive ? 'ativo' : ''}>📋 Cadastros</NavLink>
             <NavLink to="/configuracoes" className={({ isActive }) => isActive ? 'ativo' : ''}>⚙️ Configurações</NavLink>
-            {perfil === 'gestor' && (
+          </>}
+          <button onClick={toggleDarkMode} className="btn-dark-mode" style={{ marginTop: '12px' }}>
+            {darkMode ? '☀️ Modo claro' : '🌙 Modo escuro'}
+          </button>
+          <button onClick={handleLogout} style={{ marginTop: 'auto' }}>🚪 Sair</button>
+
+          {/* Seção Admin SaaS — só para o fundador */}
+          {perfil === 'gestor' && (
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0 16px 6px' }}>
+                Admin SaaS
+              </div>
+              <NavLink to="/fundador" className={({ isActive }) => isActive ? 'ativo' : ''}>
+                🚀 Painel do Fundador
+              </NavLink>
               <NavLink to="/leads" className={({ isActive }) => isActive ? 'ativo' : ''}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span>🎯 Leads Beta</span>
@@ -114,12 +128,8 @@ export default function Layout({ children }) {
                   </span>
                 )}
               </NavLink>
-            )}
-          </>}
-          <button onClick={toggleDarkMode} className="btn-dark-mode" style={{ marginTop: '12px' }}>
-            {darkMode ? '☀️ Modo claro' : '🌙 Modo escuro'}
-          </button>
-          <button onClick={handleLogout} style={{ marginTop: 'auto' }}>🚪 Sair</button>
+            </div>
+          )}
         </nav>
 
         <div className="sidebar-footer">

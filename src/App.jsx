@@ -9,6 +9,7 @@ import AdminCadastros from './pages/AdminCadastros'
 import Historico from './pages/Historico'
 import Configuracoes from './pages/Configuracoes'
 import Leads from './pages/Leads'
+import FounderDashboard from './pages/FounderDashboard'
 
 // Tela exibida quando o usuário confirmou o e-mail mas o admin ainda não criou o perfil
 function AguardandoAprovacao() {
@@ -105,6 +106,12 @@ export default function App() {
       <Route path="/leads" element={
         <RotaProtegida perfisPermitidos={['gestor']}>
           <Layout><Leads /></Layout>
+        </RotaProtegida>
+      } />
+
+      <Route path="/fundador" element={
+        <RotaProtegida perfisPermitidos={['gestor']}>
+          <Layout><FounderDashboard /></Layout>
         </RotaProtegida>
       } />
 
