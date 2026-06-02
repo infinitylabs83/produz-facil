@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import Landing from './pages/Landing'
 import KitchenProduction from './pages/KitchenProduction'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminCadastros from './pages/AdminCadastros'
@@ -24,6 +25,9 @@ export default function App() {
 
   return (
     <Routes>
+      {/* Landing page — pública */}
+      <Route path="/landing" element={<Landing />} />
+
       <Route
         path="/login"
         element={user ? <Navigate to={perfil === 'operador' ? '/producao' : '/dashboard'} replace /> : <Login />}
@@ -60,7 +64,7 @@ export default function App() {
       } />
 
       <Route path="/" element={
-        !user ? <Navigate to="/login" replace />
+        !user ? <Landing />
           : perfil === 'operador' ? <Navigate to="/producao" replace />
           : <Navigate to="/dashboard" replace />
       } />
