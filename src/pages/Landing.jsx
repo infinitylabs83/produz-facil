@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
-const WPP = '5511999999999' // ← troque pelo seu número com DDI+DDD sem espaços
+const WPP = '5598991289090' // WhatsApp do responsável
 
 function BtnWpp({ texto, origem }) {
   const msg = encodeURIComponent(`Olá! Vi o ProduzFácil CMV e quero saber mais sobre o beta gratuito. (${origem})`)
