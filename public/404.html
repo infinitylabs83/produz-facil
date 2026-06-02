@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script>
+      // Redireciona rotas do GitHub Pages para o index.html
+      var path = window.location.pathname.replace('/produz-facil', '') || '/';
+      var search = window.location.search;
+      var hash = window.location.hash;
+      window.location.replace(
+        '/produz-facil/?p=' + encodeURIComponent(path + search) + hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
