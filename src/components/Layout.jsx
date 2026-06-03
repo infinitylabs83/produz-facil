@@ -110,26 +110,7 @@ export default function Layout({ children }) {
           </button>
           <button onClick={handleLogout} style={{ marginTop: 'auto' }}>🚪 Sair</button>
 
-          {/* Seção Admin SaaS — só para o fundador */}
-          {perfil === 'gestor' && (
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '0 16px 6px' }}>
-                Admin SaaS
-              </div>
-              <NavLink to="/fundador" className={({ isActive }) => isActive ? 'ativo' : ''}>
-                🚀 Painel do Fundador
-              </NavLink>
-              <NavLink to="/leads" className={({ isActive }) => isActive ? 'ativo' : ''}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span>🎯 Leads Beta</span>
-                {leadsNovos > 0 && (
-                  <span style={{ background: '#f97316', color: 'white', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px' }}>
-                    {leadsNovos}
-                  </span>
-                )}
-              </NavLink>
-            </div>
-          )}
+          {/* Leads e Painel Master acessíveis só por URL direta — não aparecem no menu */}
         </nav>
 
         <div className="sidebar-footer">
@@ -224,33 +205,7 @@ export default function Layout({ children }) {
                   ⚙️ Configurações
                 </NavLink>
               )}
-              {perfil === 'gestor' && (
-                <>
-                  <NavLink to="/leads"
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px',
-                      color: isActive ? '#f97316' : 'rgba(255,255,255,0.7)',
-                      background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
-                      textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500,
-                    })}>
-                    <span>🎯 Leads Beta</span>
-                    {leadsNovos > 0 && (
-                      <span style={{ background: '#f97316', color: 'white', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px' }}>
-                        {leadsNovos}
-                      </span>
-                    )}
-                  </NavLink>
-                  <NavLink to="/fundador"
-                    style={({ isActive }) => ({
-                      display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px',
-                      color: isActive ? '#f97316' : 'rgba(255,255,255,0.7)',
-                      background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
-                      textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500,
-                    })}>
-                    🚀 Painel do Fundador
-                  </NavLink>
-                </>
-              )}
+              {/* Leads e Painel Master acessíveis só por URL direta — não aparecem no menu */}
             </div>
 
             {/* Botão sair — sempre visível na base */}
