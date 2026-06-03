@@ -211,33 +211,57 @@ export default function Layout({ children }) {
               </div>
             </div>
 
-            {ehAdmin && (
-              <NavLink to="/configuracoes" className={({ isActive }) => isActive ? 'ativo' : ''}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px',
-                  color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>
-                ⚙️ Configurações
-              </NavLink>
-            )}
-            {perfil === 'gestor' && (
-              <NavLink to="/leads" className={({ isActive }) => isActive ? 'ativo' : ''}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px',
-                  color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500 }}>
-                <span>🎯 Leads Beta</span>
-                {leadsNovos > 0 && (
-                  <span style={{ background: '#f97316', color: 'white', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px' }}>
-                    {leadsNovos}
-                  </span>
-                )}
-              </NavLink>
-            )}
+            {/* Links do drawer */}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {ehAdmin && (
+                <NavLink to="/configuracoes"
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px',
+                    color: isActive ? '#f97316' : 'rgba(255,255,255,0.7)',
+                    background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
+                    textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500,
+                  })}>
+                  ⚙️ Configurações
+                </NavLink>
+              )}
+              {perfil === 'gestor' && (
+                <>
+                  <NavLink to="/leads"
+                    style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px',
+                      color: isActive ? '#f97316' : 'rgba(255,255,255,0.7)',
+                      background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
+                      textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500,
+                    })}>
+                    <span>🎯 Leads Beta</span>
+                    {leadsNovos > 0 && (
+                      <span style={{ background: '#f97316', color: 'white', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px' }}>
+                        {leadsNovos}
+                      </span>
+                    )}
+                  </NavLink>
+                  <NavLink to="/fundador"
+                    style={({ isActive }) => ({
+                      display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px',
+                      color: isActive ? '#f97316' : 'rgba(255,255,255,0.7)',
+                      background: isActive ? 'rgba(249,115,22,0.1)' : 'transparent',
+                      textDecoration: 'none', fontSize: '0.95rem', fontWeight: 500,
+                    })}>
+                    🚀 Painel do Fundador
+                  </NavLink>
+                </>
+              )}
+            </div>
 
-            <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', padding: '16px 20px' }}>
+            {/* Botão sair — sempre visível na base */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '16px 20px' }}>
               <button onClick={handleLogout} style={{
-                width: '100%', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
-                color: '#fca5a5', borderRadius: '8px', padding: '12px', cursor: 'pointer',
-                fontWeight: 600, fontSize: '0.9rem',
+                width: '100%', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)',
+                color: '#fca5a5', borderRadius: '10px', padding: '14px', cursor: 'pointer',
+                fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', gap: '8px',
               }}>
-                🚪 Sair
+                🚪 Sair da conta
               </button>
             </div>
           </div>
