@@ -155,6 +155,14 @@ export default function Layout({ children }) {
           }}>
             {darkMode ? '☀️' : '🌙'}
           </button>
+          {/* Botão Sair — sempre visível */}
+          <button onClick={handleLogout} style={{
+            background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: '8px', padding: '8px 12px', cursor: 'pointer',
+            color: '#fca5a5', fontSize: '0.8rem', fontWeight: 700, lineHeight: 1,
+          }}>
+            🚪 Sair
+          </button>
           {/* Botão hamburger para itens extras */}
           <button onClick={() => setMenuAberto(!menuAberto)} style={{
             background: menuAberto ? 'rgba(249,115,22,0.2)' : 'rgba(255,255,255,0.08)',
