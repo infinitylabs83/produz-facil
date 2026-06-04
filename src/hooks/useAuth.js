@@ -15,8 +15,10 @@ export function useAuth() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) carregarPerfil(session.user.id)
-      else {
+      if (session?.user) {
+        setLoading(true) // mantém loading enquanto perfil não chegou
+        carregarPerfil(session.user.id)
+      } else {
         setPerfil(null)
         setLoading(false)
       }
