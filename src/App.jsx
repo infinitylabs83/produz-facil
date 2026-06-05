@@ -10,6 +10,7 @@ import Historico from './pages/Historico'
 import Configuracoes from './pages/Configuracoes'
 import Leads from './pages/Leads'
 import PainelMaster from './pages/PainelMaster'
+import KitchenGateway from './pages/KitchenGateway'
 
 // Tela exibida quando o usuário confirmou o e-mail mas o admin ainda não criou o perfil
 function AguardandoAprovacao() {
@@ -111,6 +112,9 @@ export default function App() {
 
       {/* Painel Master — completamente isolado, sem Layout do app */}
       <Route path="/painel-master" element={<PainelMaster />} />
+
+      {/* Cozinha — acesso via QR Code + PIN, sem login Supabase */}
+      <Route path="/cozinha" element={<KitchenGateway />} />
 
       <Route path="/" element={
         !user ? <Landing /> :
