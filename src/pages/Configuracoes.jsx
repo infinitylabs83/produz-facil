@@ -17,12 +17,14 @@ function QRCardPrint({ nomeEmpresa, qrUrl, onFechar }) {
       {/* Estilos de impressão */}
       <style>{`
         @media print {
-          body > * { display: none !important; }
-          #qr-print-overlay { display: flex !important; }
+          body * { visibility: hidden !important; }
+          #qr-card-print, #qr-card-print * { visibility: visible !important; }
           #qr-card-print {
-            width: 148mm; height: 210mm;
-            page-break-after: always;
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 148mm !important;
             box-shadow: none !important;
+            border-radius: 0 !important;
           }
         }
         @media screen {
