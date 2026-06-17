@@ -278,12 +278,28 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
         </button>
       </div>
 
-      {/* Steps */}
-      <div style={{ display: 'flex', gap: '6px', maxWidth: '500px', margin: '0 auto 24px' }}>
+      {/* Steps visuais */}
+      <div style={{ display: 'flex', alignItems: 'center', maxWidth: '500px', margin: '0 auto 28px' }}>
         {ETAPAS.map((e, i) => (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <div style={{ height: '4px', width: '100%', borderRadius: '2px', background: i <= etapa ? '#f97316' : '#334155' }} />
-            <span style={{ fontSize: '0.7rem', color: i <= etapa ? '#f97316' : '#475569', fontWeight: i === etapa ? 700 : 400 }}>{e}</span>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < ETAPAS.length - 1 ? 1 : 0 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                background: i < etapa ? '#f97316' : i === etapa ? 'linear-gradient(135deg,#f97316,#ea580c)' : '#1e293b',
+                border: i === etapa ? '2px solid #f97316' : i < etapa ? 'none' : '2px solid #334155',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: i < etapa ? '1rem' : '0.9rem',
+                color: i <= etapa ? 'white' : '#475569',
+                boxShadow: i === etapa ? '0 0 14px rgba(249,115,22,0.5)' : 'none',
+                transition: 'all 0.3s ease', flexShrink: 0,
+              }}>
+                {i < etapa ? '✓' : i + 1}
+              </div>
+              <span style={{ fontSize: '0.65rem', color: i === etapa ? '#f97316' : i < etapa ? '#22c55e' : '#475569', fontWeight: i === etapa ? 700 : 500, whiteSpace: 'nowrap' }}>{e}</span>
+            </div>
+            {i < ETAPAS.length - 1 && (
+              <div style={{ flex: 1, height: '2px', background: i < etapa ? '#f97316' : '#334155', margin: '0 6px', marginBottom: '18px', transition: 'background 0.3s ease' }} />
+            )}
           </div>
         ))}
       </div>
@@ -420,11 +436,45 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
 }
 
 // ── Tela resultado ─────────────────────────────────────────────────────────────
+function Confetti() {
+  const cores = ['#f97316','#22c55e','#3b82f6','#fbbf24','#a855f7','#ef4444']
+  const particulas = Array.from({ length: 28 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    delay: Math.random() * 0.8,
+    dur: 1.2 + Math.random() * 0.8,
+    cor: cores[i % cores.length],
+    size: 6 + Math.random() * 6,
+    rot: Math.random() * 360,
+  }))
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: '20px' }}>
+      <style>{`
+        @keyframes confettiFall {
+          0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(280px) rotate(720deg); opacity: 0; }
+        }
+      `}</style>
+      {particulas.map(p => (
+        <div key={p.id} style={{
+          position: 'absolute', top: 0, left: `${p.x}%`,
+          width: `${p.size}px`, height: `${p.size}px`,
+          background: p.cor, borderRadius: p.id % 3 === 0 ? '50%' : '2px',
+          animation: `confettiFall ${p.dur}s ease-in ${p.delay}s forwards`,
+          transform: `rotate(${p.rot}deg)`,
+        }} />
+      ))}
+    </div>
+  )
+}
+
 function TelaResultado({ resultado, funcionario, onNova }) {
   const s = STATUS_CONFIG[resultado.status] || STATUS_CONFIG.atencao
+  const sucesso = resultado.status === 'excelente' || resultado.status === 'meta'
   return (
     <div style={S.page}>
-      <div style={{ ...S.card, textAlign: 'center' }}>
+      <div style={{ ...S.card, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        {sucesso && <Confetti />}
         <div style={{ fontSize: '3.5rem', marginBottom: '12px' }}>{s.emoji}</div>
         <div style={{ fontWeight: 800, fontSize: '1.4rem', color: s.cor, marginBottom: '8px' }}>{s.label}</div>
         <div style={{ color: '#94a3b8', marginBottom: '24px', fontSize: '0.9rem' }}>

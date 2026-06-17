@@ -131,6 +131,9 @@ export default function Configuracoes() {
   // Cozinha
   const [tokenCozinha, setTokenCozinha]   = useState(null)
   const [pinCozinha, setPinCozinha]       = useState('')
+  const [pinVisivel, setPinVisivel]       = useState(false)
+  const [alterandoPin, setAlterandoPin]   = useState(false)
+  const [novoPinTemp, setNovoPinTemp]     = useState('')
   const [funcionarios, setFuncionarios]   = useState([])
   const [novoFunc, setNovoFunc]           = useState('')
   const [gerandoQR, setGerandoQR]         = useState(false)
@@ -212,6 +215,22 @@ export default function Configuracoes() {
     setTokenCozinha(null)
     await supabase.from('empresas').update({ token_cozinha: null, pin_cozinha: null, kitchen_user_id: null }).eq('id', empresaId)
     mostrarMsg('QR revogado. Gere um novo quando quiser.')
+  }
+
+  async function salvarNovoPin() {
+    if (!novoPinTemp || novoPinTemp.length < 4) { mostrarMsg('⚠️ PIN deve ter pelo menos 4 dígitos.'); return }
+    setGerandoQR(true)
+    const { data, error } = await supabase.rpc('criar_usuario_cozinha', {
+      p_empresa_id: empresaId,
+      p_pin: novoPinTemp,
+    })
+    if (error) { mostrarMsg('Erro ao atualizar PIN: ' + error.message); setGerandoQR(false); return }
+    setPinCozinha(novoPinTemp)
+    setNovoPinTemp('')
+    setAlterandoPin(false)
+    setTokenCozinha(data.token)
+    setGerandoQR(false)
+    mostrarMsg('✅ PIN atualizado com sucesso!')
   }
 
   async function salvarFuncionarios() {
@@ -344,14 +363,62 @@ export default function Configuracoes() {
           {/* PIN e QR */}
           <div>
             <div style={{ fontWeight: 700, marginBottom: '12px' }}>🔑 PIN de acesso</div>
-            <input
-              type="password" inputMode="numeric" maxLength={6} placeholder="4 a 6 dígitos"
-              value={pinCozinha} onChange={e => setPinCozinha(e.target.value.replace(/\D/g, ''))}
-              style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '0.3rem', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '16px' }}
-            />
-            <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginBottom: '16px' }}>
-              Guarde este PIN com segurança. Nunca aparece impresso no QR Code.
-            </span>
+
+            {/* PIN atual com olho */}
+            {pinCozinha ? (
+              <div style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <div style={{ flex: 1, padding: '12px 16px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '1.2rem', textAlign: 'center', letterSpacing: pinVisivel ? '0.2rem' : '0.5rem', fontFamily: 'monospace' }}>
+                    {pinVisivel ? pinCozinha : '•'.repeat(pinCozinha.length)}
+                  </div>
+                  <button
+                    onClick={() => setPinVisivel(v => !v)}
+                    title={pinVisivel ? 'Ocultar PIN' : 'Ver PIN'}
+                    style={{ padding: '12px 14px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo)', color: 'var(--cor-texto-suave)', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0 }}
+                  >
+                    {pinVisivel ? '🙈' : '👁️'}
+                  </button>
+                  <button
+                    onClick={() => { setAlterandoPin(v => !v); setNovoPinTemp('') }}
+                    title="Alterar PIN"
+                    style={{ padding: '12px 14px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: alterandoPin ? 'rgba(249,115,22,0.1)' : 'var(--cor-fundo)', color: alterandoPin ? 'var(--cor-primaria)' : 'var(--cor-texto-suave)', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0, borderColor: alterandoPin ? 'var(--cor-primaria)' : 'var(--cor-borda)' }}
+                  >
+                    ✏️
+                  </button>
+                </div>
+                <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginBottom: alterandoPin ? '12px' : '16px' }}>
+                  PIN atual. Clique no 👁️ para ver ou ✏️ para alterar.
+                </span>
+
+                {/* Campo de novo PIN */}
+                {alterandoPin && (
+                  <div style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid var(--cor-primaria)', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '8px', color: 'var(--cor-primaria)' }}>Novo PIN</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text" inputMode="numeric" maxLength={6} placeholder="4 a 6 dígitos"
+                        value={novoPinTemp} onChange={e => setNovoPinTemp(e.target.value.replace(/\D/g, ''))}
+                        style={{ flex: 1, padding: '10px 14px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '0.3rem', fontFamily: 'monospace' }}
+                      />
+                      <button onClick={salvarNovoPin} disabled={gerandoQR} className="btn btn-primario" style={{ whiteSpace: 'nowrap' }}>
+                        {gerandoQR ? '⏳' : '✅ Salvar'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <input
+                  type="text" inputMode="numeric" maxLength={6} placeholder="4 a 6 dígitos"
+                  value={pinCozinha} onChange={e => setPinCozinha(e.target.value.replace(/\D/g, ''))}
+                  style={{ width: '100%', padding: '12px 16px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '0.3rem', fontFamily: 'monospace', boxSizing: 'border-box', marginBottom: '8px' }}
+                />
+                <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginBottom: '16px' }}>
+                  Crie um PIN de 4 a 6 dígitos para a cozinha.
+                </span>
+              </>
+            )}
 
             {!tokenCozinha ? (
               <button onClick={gerarQRCozinha} disabled={gerandoQR} className="btn btn-primario" style={{ width: '100%' }}>

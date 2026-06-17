@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts'
 
 const STATUS_LABEL = { excelente: '🏆 Excelente', meta: '✅ Na meta', atencao: '⚠️ Atenção', perda: '❌ Perda alta' }
 const STATUS_BG    = {
@@ -78,6 +81,26 @@ export default function Historico() {
 
   if (carregando) return <div className="loading-tela">Carregando histórico...</div>
 
+  // ── Dados do gráfico: últimas 30 produções em ordem cronológica ──
+  const dadosGrafico = [...filtradas]
+    .slice(0, 30)
+    .reverse()
+    .map(p => ({
+      data: new Date(p.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      'Custo/porção': parseFloat((p.custo_porcao || 0).toFixed(2)),
+      'Rendimento %': parseFloat((p.rendimento || 0).toFixed(1)),
+    }))
+
+  // ── KPIs rápidos das produções filtradas ──
+  const custoMedioPortao = filtradas.length
+    ? filtradas.reduce((a, p) => a + (p.custo_porcao || 0), 0) / filtradas.length
+    : 0
+  const rendimentoMedio = filtradas.length
+    ? filtradas.reduce((a, p) => a + (p.rendimento || 0), 0) / filtradas.length
+    : 0
+  const countStatus = { excelente: 0, meta: 0, atencao: 0, perda: 0 }
+  filtradas.forEach(p => { if (p.status) countStatus[p.status] = (countStatus[p.status] || 0) + 1 })
+
   return (
     <div>
       <div className="pagina-cabecalho">
@@ -93,6 +116,62 @@ export default function Historico() {
           🗑️ Apagar tudo
         </button>
       </div>
+
+      {/* ── KPIs rápidos ── */}
+      {filtradas.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+          {[
+            { label: 'Custo médio/porção', val: `R$ ${custoMedioPortao.toFixed(2)}`, cor: 'var(--cor-primaria)' },
+            { label: 'Rendimento médio', val: `${rendimentoMedio.toFixed(1)}%`, cor: 'var(--cor-sucesso)' },
+            { label: 'Excelentes', val: countStatus.excelente, cor: 'var(--cor-sucesso)' },
+            { label: 'Na meta', val: countStatus.meta, cor: 'var(--cor-info)' },
+            { label: 'Atenção', val: countStatus.atencao, cor: 'var(--cor-atencao)' },
+            { label: 'Perda alta', val: countStatus.perda, cor: 'var(--cor-perigo)' },
+          ].map((k, i) => (
+            <div key={i} className="card" style={{ borderTop: `3px solid ${k.cor}`, padding: '12px 16px' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--cor-texto-suave)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{k.label}</div>
+              <div style={{ fontWeight: 800, fontSize: '1.3rem', color: k.cor }}>{k.val}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Gráfico evolução CMV ── */}
+      {dadosGrafico.length >= 2 && (
+        <div className="card" style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '12px' }}>
+            <div className="card-titulo">Evolução: Custo/porção e Rendimento</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--cor-texto-suave)' }}>
+              {filtradas.length > 30 ? 'últimas 30 produções filtradas' : 'todas as produções filtradas'} — em ordem cronológica
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={dadosGrafico} margin={{ top: 8, right: 20, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="gradCusto" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradRend" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--cor-borda)" />
+              <XAxis dataKey="data" tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} />
+              <YAxis yAxisId="custo" tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} />
+              <YAxis yAxisId="rend" orientation="right" tick={{ fontSize: 10, fill: '#22c55e' }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+              <Tooltip
+                contentStyle={{ background: 'var(--cor-fundo-card)', border: '1px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.82rem' }}
+                formatter={(v, name) => name === 'Custo/porção' ? [`R$ ${v}`, name] : [`${v}%`, name]}
+              />
+              <Legend wrapperStyle={{ fontSize: '0.82rem', paddingTop: '8px' }} />
+              <Area yAxisId="custo" type="monotone" dataKey="Custo/porção" stroke="#f97316" strokeWidth={2.5} fill="url(#gradCusto)" dot={false} activeDot={{ r: 5 }} />
+              <Area yAxisId="rend"  type="monotone" dataKey="Rendimento %" stroke="#22c55e" strokeWidth={2.5} fill="url(#gradRend)"  dot={false} activeDot={{ r: 5 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="card" style={{ marginBottom: '20px', padding: '16px' }}>

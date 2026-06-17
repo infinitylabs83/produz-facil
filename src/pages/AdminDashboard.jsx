@@ -223,8 +223,19 @@ export default function AdminDashboard() {
   const pctDentro  = totalDoProduto ? Math.round((dentroMeta / totalDoProduto) * 100) : 0
 
   const ultimas5 = producoesDoProduto.slice(0, 5)
+  const ultimas10 = producoesDoProduto.slice(0, 10)
   const custoMedioKg = ultimas5.length
     ? ultimas5.reduce((a, p) => a + (p.custo_por_kg_pronto || 0), 0) / ultimas5.length
+    : null
+
+  // Sparklines e tendências
+  const sparkRendimento = [...producoesDoProduto].reverse().slice(-8).map(p => p.rendimento || 0)
+  const sparkCusto = [...producoesDoProduto].reverse().slice(-8).map(p => p.custo_porcao || 0)
+  const tendRendimento = producoesDoProduto.length >= 2
+    ? ((producoesDoProduto[0].rendimento || 0) - (producoesDoProduto[1].rendimento || 0))
+    : null
+  const tendCusto = producoesDoProduto.length >= 2
+    ? (((producoesDoProduto[0].custo_porcao || 0) - (producoesDoProduto[1].custo_porcao || 0)) / (producoesDoProduto[1].custo_porcao || 1)) * 100
     : null
 
   const diagDetalhe = diagnosticar(producoesDoProduto)
@@ -366,9 +377,9 @@ export default function AdminDashboard() {
 
       <div className="grid-metricas" style={{ marginBottom: '20px' }}>
         <MetricCard titulo="Produções registradas" valor={totalDoProduto} subtexto={nomeProdutoSelecionado} cor="var(--cor-info)" />
-        <MetricCard titulo="Custo médio/kg" valor={custoMedioKg !== null ? `R$ ${custoMedioKg.toFixed(2)}` : '—'} subtexto={`últimas ${ultimas5.length} produções`} cor="#a855f7" />
-        <MetricCard titulo="Dentro da meta" valor={dentroMeta} subtexto={`${pctDentro}% das produções`} cor="var(--cor-sucesso)" />
-        <MetricCard titulo="Fora da meta" valor={foraMeta} subtexto={`${100 - pctDentro}% das produções`} cor="var(--cor-perigo)" />
+        <MetricCard titulo="Custo médio/porção" valor={producoesDoProduto[0] ? `R$ ${parseFloat(producoesDoProduto[0].custo_porcao || 0).toFixed(2)}` : '—'} subtexto={`últimas ${ultimas5.length} produções`} cor="#a855f7" sparkline={sparkCusto} tendencia={tendCusto} />
+        <MetricCard titulo="Rendimento último" valor={producoesDoProduto[0] ? `${parseFloat(producoesDoProduto[0].rendimento || 0).toFixed(1)}%` : '—'} subtexto={`meta: ${metaDoProduto}%`} cor="var(--cor-sucesso)" sparkline={sparkRendimento} tendencia={tendRendimento} />
+        <MetricCard titulo="Dentro da meta" valor={`${dentroMeta}/${totalDoProduto}`} subtexto={`${pctDentro}% das produções`} cor={pctDentro >= 70 ? 'var(--cor-sucesso)' : 'var(--cor-perigo)'} />
       </div>
 
       {/* ── Diagnóstico detalhado do produto selecionado ── */}

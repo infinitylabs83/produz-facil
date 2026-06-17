@@ -98,13 +98,18 @@ export default function Layout({ children }) {
         </div>
 
         <nav className="sidebar-nav">
-          <NavLink to="/producao" className={({ isActive }) => isActive ? 'ativo' : ''}>🍳 Nova Produção</NavLink>
-          {ehAdmin && <>
-            <NavLink to="/dashboard"    className={({ isActive }) => isActive ? 'ativo' : ''}>📊 Dashboard</NavLink>
-            <NavLink to="/historico"    className={({ isActive }) => isActive ? 'ativo' : ''}>📅 Histórico</NavLink>
-            <NavLink to="/cadastros"    className={({ isActive }) => isActive ? 'ativo' : ''}>📋 Cadastros</NavLink>
-            <NavLink to="/configuracoes" className={({ isActive }) => isActive ? 'ativo' : ''}>⚙️ Configurações</NavLink>
-          </>}
+          {[
+            { to: '/producao', icon: '🍳', label: 'Nova Produção', sempre: true },
+            { to: '/dashboard', icon: '📊', label: 'Dashboard', admin: true },
+            { to: '/historico', icon: '📅', label: 'Histórico', admin: true },
+            { to: '/cadastros', icon: '📋', label: 'Cadastros', admin: true },
+            { to: '/configuracoes', icon: '⚙️', label: 'Configurações', admin: true },
+          ].filter(i => i.sempre || (i.admin && ehAdmin)).map(item => (
+            <NavLink key={item.to} to={item.to} className={({ isActive }) => isActive ? 'ativo' : ''}>
+              <span style={{ fontSize: '1rem', flexShrink: 0 }}>{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))}
           <button onClick={toggleDarkMode} className="btn-dark-mode" style={{ marginTop: '12px' }}>
             {darkMode ? '☀️ Modo claro' : '🌙 Modo escuro'}
           </button>
