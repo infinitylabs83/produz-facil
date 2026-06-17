@@ -4,9 +4,19 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './styles.css'
 
+// GitHub Pages redireciona rotas desconhecidas para /?p=/caminho
+;(function() {
+  const params = new URLSearchParams(window.location.search)
+  const redirect = params.get('p')
+  if (redirect) {
+    const url = decodeURIComponent(redirect)
+    window.history.replaceState(null, '', '/produz-facil' + url)
+  }
+})()
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/produz-facil">
       <App />
     </BrowserRouter>
   </React.StrictMode>

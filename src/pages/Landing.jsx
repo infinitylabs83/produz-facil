@@ -3,727 +3,692 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const WPP = '5598991289090'
-
 function wppLink(origem) {
   const msg = encodeURIComponent(`Olá! Vi o ProduzFácil CMV e quero saber mais sobre o beta gratuito. (${origem})`)
   return `https://wa.me/${WPP}?text=${msg}`
 }
 
-// ── Ícones SVG ──────────────────────────────────────────────────────────────
-const IconWpp = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.86L.057 23.427a.75.75 0 0 0 .921.921l5.565-1.479A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.96 0-3.793-.538-5.362-1.473l-.384-.228-3.984 1.058 1.058-3.984-.228-.384A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
-  </svg>
-)
+// Inject Google Fonts
+function useFonts() {
+  useEffect(() => {
+    if (document.getElementById('lp-fonts')) return
+    const link = document.createElement('link')
+    link.id = 'lp-fonts'
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap'
+    document.head.appendChild(link)
+  }, [])
+}
 
-const IconArrow = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
-  </svg>
-)
+// Animated counter hook
+function useCounter(target, duration = 1800, start = false) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    if (!start) return
+    let startTime = null
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp
+      const progress = Math.min((timestamp - startTime) / duration, 1)
+      const ease = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.round(ease * target))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    requestAnimationFrame(step)
+  }, [start, target, duration])
+  return value
+}
 
-const IconCheck = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 6 9 17l-5-5"/>
-  </svg>
-)
+// Intersection observer hook
+function useInView(threshold = 0.2) {
+  const ref = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setInView(true) },
+      { threshold }
+    )
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [threshold])
+  return [ref, inView]
+}
 
-const IconX = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
+// Mobile detection
+function useIsMobile() {
+  const [mobile, setMobile] = useState(window.innerWidth <= 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
 
-const IconChevron = ({ aberto }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ transform: aberto ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.25s ease' }}>
-    <path d="m6 9 6 6 6-6"/>
-  </svg>
-)
-
-// ── Formatação ──────────────────────────────────────────────────────────────
+// ── Formatação telefone ──
 function formatarTelefone(valor) {
   const nums = valor.replace(/\D/g, '').slice(0, 11)
-  if (nums.length <= 2)  return nums
-  if (nums.length <= 7)  return `(${nums.slice(0,2)}) ${nums.slice(2)}`
-  if (nums.length <= 11) return `(${nums.slice(0,2)}) ${nums.slice(2,7)}-${nums.slice(7)}`
-  return valor
+  if (nums.length <= 2) return nums
+  if (nums.length <= 7) return `(${nums.slice(0,2)}) ${nums.slice(2)}`
+  return `(${nums.slice(0,2)}) ${nums.slice(2,7)}-${nums.slice(7)}`
 }
 
-// ── Botão WhatsApp ──────────────────────────────────────────────────────────
-function BtnWpp({ texto, origem, full, outline }) {
-  const [hov, setHov] = useState(false)
-  return (
-    <a href={wppLink(origem)} target="_blank" rel="noreferrer"
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-        background: outline ? 'transparent' : (hov ? '#1ebe5a' : '#25D366'),
-        color: outline ? '#25D366' : 'white',
-        border: outline ? '2px solid #25D366' : 'none',
-        fontWeight: 700, padding: '14px 26px', borderRadius: '12px',
-        textDecoration: 'none', fontSize: '0.95rem',
-        transition: 'all 0.2s', width: full ? '100%' : 'auto',
-        transform: hov ? 'translateY(-1px)' : 'none',
-        boxShadow: hov ? '0 8px 25px rgba(37,211,102,0.35)' : 'none',
-      }}
-    >
-      <IconWpp /> {texto}
-    </a>
-  )
+// ── Paleta ──
+const C = {
+  bg:      '#080604',
+  surface: '#100D0A',
+  border:  '#2A2218',
+  orange:  '#FF6A00',
+  amber:   '#FFAB00',
+  text:    '#F5EDE3',
+  muted:   '#6B6059',
+  green:   '#22C55E',
+  red:     '#EF4444',
 }
 
-// ── Confirmação de inscrição ────────────────────────────────────────────────
-function ConfirmacaoInscricao({ nome }) {
-  const primeiroNome = nome.split(' ')[0]
+// ── CSS global styles ──
+const LP_STYLE = `
+  @keyframes lp-float {
+    0%,100% { transform: translateY(0px); }
+    50%      { transform: translateY(-10px); }
+  }
+  @keyframes lp-pulse-glow {
+    0%,100% { box-shadow: 0 0 30px 0px rgba(255,106,0,0.3); }
+    50%      { box-shadow: 0 0 60px 8px rgba(255,106,0,0.55); }
+  }
+  @keyframes lp-slide-up {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes lp-marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes lp-blink {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0; }
+  }
+  @keyframes lp-bar-grow {
+    from { width: 0%; }
+    to   { width: var(--bar-w); }
+  }
+  .lp-root * { box-sizing: border-box; margin: 0; padding: 0; }
+  .lp-root { font-family: 'Manrope', sans-serif; background: ${C.bg}; color: ${C.text}; line-height: 1.55; overflow-x: hidden; }
+  .lp-bebas { font-family: 'Bebas Neue', 'Impact', sans-serif; letter-spacing: 0.03em; line-height: 0.95; }
+  .lp-btn-primary {
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer; border: none;
+    background: ${C.orange}; color: white; font-family: 'Manrope', sans-serif;
+    font-size: 1rem; font-weight: 800; padding: 16px 32px; border-radius: 4px;
+    text-decoration: none; transition: all 0.2s; letter-spacing: 0.01em;
+    box-shadow: 0 4px 20px rgba(255,106,0,0.4);
+  }
+  .lp-btn-primary:hover { background: #ff8533; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,106,0,0.55); }
+  .lp-btn-outline {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    background: transparent; color: ${C.text}; font-family: 'Manrope', sans-serif;
+    font-size: 0.9rem; font-weight: 700; padding: 14px 28px; border-radius: 4px;
+    text-decoration: none; transition: all 0.2s; border: 1.5px solid rgba(245,237,227,0.25);
+  }
+  .lp-btn-outline:hover { border-color: ${C.orange}; color: ${C.orange}; }
+  .lp-label {
+    display: inline-block; font-family: 'Manrope', sans-serif; font-size: 0.7rem;
+    font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+    color: ${C.orange}; margin-bottom: 14px;
+  }
+  .lp-card {
+    background: ${C.surface}; border: 1px solid ${C.border}; border-radius: 12px;
+    overflow: hidden;
+  }
+  .lp-faq-item { border-bottom: 1px solid ${C.border}; }
+  .lp-faq-btn {
+    width: 100%; background: none; border: none; cursor: pointer; color: ${C.text};
+    font-family: 'Manrope', sans-serif; font-size: 1rem; font-weight: 700;
+    padding: 22px 0; display: flex; justify-content: space-between; align-items: center;
+    text-align: left; gap: 16px;
+  }
+  .lp-faq-btn:hover { color: ${C.orange}; }
+  .lp-tag {
+    display: inline-block; background: rgba(255,106,0,0.12); border: 1px solid rgba(255,106,0,0.3);
+    color: ${C.orange}; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 4px 10px; border-radius: 3px;
+  }
+`
+
+// ── Dashboard mock ──
+function DashMock() {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🎉</div>
-      <div style={{ fontWeight: 800, fontSize: '1.4rem', color: '#22c55e', marginBottom: '8px' }}>
-        {primeiroNome}, sua vaga está garantida!
+    <div style={{
+      background: '#12100D',
+      border: '1px solid #2E2519',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      fontFamily: 'Manrope, sans-serif',
+      animation: 'lp-pulse-glow 3s ease-in-out infinite',
+    }}>
+      {/* Header bar */}
+      <div style={{ background: '#1A1610', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #2E2519' }}>
+        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444' }} />
+        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FFAB00' }} />
+        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#22C55E' }} />
+        <span style={{ color: '#6B6059', fontSize: '0.7rem', marginLeft: '8px', fontWeight: 600 }}>ProduzFácil CMV — Dashboard</span>
       </div>
-      <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '16px' }}>
-        Enviamos um <strong style={{ color: '#f1f5f9' }}>link de acesso para o seu e-mail</strong>. Clique nele para confirmar sua inscrição.
-      </p>
-      <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '10px', padding: '12px 16px', marginBottom: '24px', display: 'flex', gap: '10px', alignItems: 'flex-start', textAlign: 'left' }}>
-        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>⚠️</span>
-        <div style={{ fontSize: '0.85rem', color: '#fcd34d', lineHeight: 1.6 }}>
-          <strong>Verifique o spam!</strong> Confira também a caixa de lixo eletrônico se não receber em alguns minutos.
-        </div>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px', textAlign: 'left' }}>
+
+      {/* Metrics row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: '#2E2519' }}>
         {[
-          { n: '1', titulo: 'Clique no link no e-mail', desc: 'Confirme sua inscrição e acesse o sistema.' },
-          { n: '2', titulo: 'Entre no grupo beta', desc: 'Você receberá o link do grupo de beta testadores no WhatsApp.' },
-          { n: '3', titulo: 'Acesse e explore', desc: 'Use gratuitamente por 30 dias e registre suas primeiras produções.' },
-          { n: '4', titulo: 'Dê seu feedback', desc: 'A cada 15 dias enviamos um formulário rápido. Seu feedback molda o produto.' },
-        ].map(p => (
-          <div key={p.n} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '14px 16px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div style={{ width: '30px', height: '30px', background: 'linear-gradient(135deg,#f97316,#ea580c)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem', flexShrink: 0, color: 'white' }}>{p.n}</div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: '2px' }}>{p.titulo}</div>
-              <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.5 }}>{p.desc}</div>
-            </div>
+          { label: 'Custo/porção', value: 'R$ 4,38', delta: '-12%', up: false },
+          { label: 'Rendimento', value: '84,2%', delta: '+3,1%', up: true },
+          { label: 'Produções', value: '32', delta: 'esta semana', up: true },
+        ].map((m, i) => (
+          <div key={i} style={{ background: '#12100D', padding: '16px 14px' }}>
+            <div style={{ color: '#6B6059', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
+            <div style={{ color: '#F5EDE3', fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{m.value}</div>
+            <div style={{ color: m.up ? '#22C55E' : '#EF4444', fontSize: '0.65rem', fontWeight: 700 }}>{m.delta}</div>
           </div>
         ))}
       </div>
-      <BtnWpp texto="Falar no WhatsApp agora" origem="pos_inscricao" full />
+
+      {/* Chart area */}
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid #2E2519' }}>
+        <div style={{ color: '#6B6059', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>Rendimento por produção</div>
+        <svg width="100%" height="56" viewBox="0 0 300 56" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FF6A00" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#FF6A00" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M0,44 C30,44 40,22 60,28 C80,34 100,12 120,18 C140,24 160,30 180,20 C200,10 220,16 240,12 C260,8 280,4 300,8 L300,56 L0,56 Z" fill="url(#lg1)" />
+          <path d="M0,44 C30,44 40,22 60,28 C80,34 100,12 120,18 C140,24 160,30 180,20 C200,10 220,16 240,12 C260,8 280,4 300,8" fill="none" stroke="#FF6A00" strokeWidth="2" />
+        </svg>
+      </div>
+
+      {/* Production list */}
+      <div style={{ padding: '12px 20px 16px' }}>
+        {[
+          { nome: 'Frango grelhado', kg: '12kg', status: 'Excelente', cor: '#22C55E' },
+          { nome: 'Caldo de legumes', kg: '8kg', status: 'Na meta', cor: '#FFAB00' },
+          { nome: 'Filé bovino', kg: '6kg', status: 'Atenção', cor: '#EF4444' },
+        ].map((p, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 2 ? '1px solid #1E1B15' : 'none' }}>
+            <div>
+              <div style={{ color: '#F5EDE3', fontSize: '0.75rem', fontWeight: 700 }}>{p.nome}</div>
+              <div style={{ color: '#6B6059', fontSize: '0.65rem' }}>{p.kg} processados</div>
+            </div>
+            <span style={{ background: p.cor + '22', border: `1px solid ${p.cor}55`, color: p.cor, fontSize: '0.6rem', fontWeight: 800, padding: '3px 8px', borderRadius: '3px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              {p.status}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-// ── Formulário beta ─────────────────────────────────────────────────────────
-function FormBeta() {
-  const [form, setForm] = useState({ nome: '', email: '', whatsapp: '', restaurante: '' })
+// ── FAQ item ──
+function FaqItem({ pergunta, resposta }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="lp-faq-item">
+      <button className="lp-faq-btn" onClick={() => setOpen(!open)}>
+        <span>{pergunta}</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ flexShrink: 0, transform: open ? 'rotate(45deg)' : 'rotate(0)', transition: 'transform 0.2s', color: open ? C.orange : 'inherit' }}>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{ color: C.muted, fontSize: '0.95rem', lineHeight: 1.7, paddingBottom: '22px' }}>
+          {resposta}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Step card ──
+function StepCard({ num, titulo, desc, icon }) {
+  return (
+    <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+      <div style={{
+        width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
+        background: 'rgba(255,106,0,0.12)', border: '1px solid rgba(255,106,0,0.3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: C.orange, fontSize: '1.1rem',
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ color: C.orange, fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '4px' }}>
+          {num.toString().padStart(2, '0')}
+        </div>
+        <div style={{ color: C.text, fontWeight: 800, fontSize: '1rem', marginBottom: '6px' }}>{titulo}</div>
+        <div style={{ color: C.muted, fontSize: '0.88rem', lineHeight: 1.6 }}>{desc}</div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main Component ──
+export default function Landing() {
+  useFonts()
+  const navigate = useNavigate()
+  const isMobile = useIsMobile()
+  const [telefone, setTelefone] = useState('')
+  const [nome, setNome] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [enviado, setEnviado] = useState(false)
-  const [erro, setErro] = useState('')
+  const [erroForm, setErroForm] = useState('')
 
-  const inputStyle = {
-    padding: '13px 16px', borderRadius: '10px', border: '2px solid rgba(255,255,255,0.1)',
-    background: 'rgba(255,255,255,0.05)', color: '#f1f5f9', fontSize: '0.97rem',
-    fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
-    transition: 'border-color 0.2s',
-  }
+  // Counters
+  const [statsRef, statsInView] = useInView(0.3)
+  const c1 = useCounter(38, 1800, statsInView)
+  const c2 = useCounter(84, 1800, statsInView)
+  const c3 = useCounter(12, 1800, statsInView)
 
-  async function enviar(e) {
+  async function enviarLead(e) {
     e.preventDefault()
-    setErro('')
-    setEnviando(true)
-    const { error } = await supabase.from('leads').insert({
-      nome: form.nome, email: form.email,
-      whatsapp: form.whatsapp, restaurante: form.restaurante,
-      origem: 'landing_beta',
-    })
-    if (error) { setEnviando(false); setErro('Erro ao enviar. Tente pelo WhatsApp.'); return }
-    const base = import.meta.env.BASE_URL.replace(/\/$/, '')
-    const redirectUrl = `${window.location.origin}${base}/login`
-    const senhaTemp = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10).toUpperCase() + '!9'
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: form.email, password: senhaTemp,
-      options: { emailRedirectTo: redirectUrl, data: { nome: form.nome } },
-    })
-    setEnviando(false)
-    if (signUpError) {
-      if (signUpError.message.toLowerCase().includes('already registered') || signUpError.message.toLowerCase().includes('user already')) {
-        await supabase.auth.signInWithOtp({ email: form.email, options: { emailRedirectTo: redirectUrl } })
-      } else {
-        setErro(`Erro ao enviar e-mail: ${signUpError.message}. Tente pelo WhatsApp.`)
-        return
-      }
+    if (!nome.trim() || telefone.replace(/\D/g, '').length < 10) {
+      setErroForm('Preencha nome e telefone válido.')
+      return
     }
+    setEnviando(true)
+    try {
+      await supabase.from('leads').insert([{ nome: nome.trim(), telefone: telefone.replace(/\D/g,''), convertido: false }])
+    } catch {}
+    setEnviando(false)
     setEnviado(true)
   }
 
-  if (enviado) return <ConfirmacaoInscricao nome={form.nome || 'Olá'} />
+  // ── Seção hero ──
+  const H1_SIZE = isMobile ? '14vw' : '7.5vw'
+  const HERO_COLS = isMobile ? '1fr' : '1fr 480px'
 
   return (
-    <form onSubmit={enviar} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {erro && <div style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', padding: '10px 14px', borderRadius: '8px', fontSize: '0.88rem' }}>{erro}</div>}
-      {[
-        { type: 'text', placeholder: 'Seu nome completo', key: 'nome' },
-        { type: 'text', placeholder: 'Nome do restaurante / estabelecimento', key: 'restaurante' },
-        { type: 'email', placeholder: 'Seu melhor e-mail', key: 'email' },
-      ].map(({ type, placeholder, key }) => (
-        <input key={key} style={inputStyle} type={type} placeholder={placeholder} required
-          value={form[key]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-          onFocus={e => e.target.style.borderColor = '#f97316'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
-      ))}
-      <input style={inputStyle} type="tel" placeholder="WhatsApp: (XX) XXXXX-XXXX" required
-        value={form.whatsapp} onChange={e => setForm(p => ({ ...p, whatsapp: formatarTelefone(e.target.value) }))}
-        onFocus={e => e.target.style.borderColor = '#f97316'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
-      <button type="submit" disabled={enviando}
-        style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', color: 'white', fontWeight: 800, fontSize: '1rem', padding: '15px', borderRadius: '10px', border: 'none', cursor: 'pointer', opacity: enviando ? 0.7 : 1, marginTop: '4px', letterSpacing: '0.01em' }}>
-        {enviando ? 'Enviando...' : 'Quero meu acesso beta gratuito →'}
-      </button>
-      <div style={{ fontSize: '0.75rem', color: '#475569', textAlign: 'center' }}>
-        Sem cartão de crédito · Sem compromisso · Acesso em até 24h
-      </div>
-    </form>
-  )
-}
+    <div className="lp-root">
+      <style>{LP_STYLE}</style>
 
-// ── Marquee ─────────────────────────────────────────────────────────────────
-const MARQUEE_ITENS = [
-  'Custo real por porção', 'Menos desperdício', 'Dashboard gerencial',
-  'Diagnóstico automático', 'Compare fornecedores', 'Simples para a cozinha',
-  'Controle de CMV', 'Ficha técnica digital', 'Metas de rendimento',
-  'Registro em 2 minutos', 'Escala de receitas', 'Decisões com dados reais',
-]
-
-function Marquee() {
-  const itens = [...MARQUEE_ITENS, ...MARQUEE_ITENS]
-  return (
-    <div style={{ overflow: 'hidden', background: 'linear-gradient(135deg, #f97316, #ea580c)', padding: '14px 0', width: '100%' }}>
-      <style>{`
-        @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
-        .marquee-track { display: flex; gap: 0; animation: marquee 32s linear infinite; width: max-content; }
-        .marquee-track:hover { animation-play-state: paused; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes scaleIn { from { opacity:0; transform:scale(0.92) } to { opacity:1; transform:scale(1) } }
-        @keyframes glowPulse { 0%,100% { opacity:0.5; transform:scale(1) } 50% { opacity:0.8; transform:scale(1.05) } }
-        @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
-      `}</style>
-      <div className="marquee-track">
-        {itens.map((item, i) => (
-          <span key={i} style={{ padding: '0 32px', color: 'white', fontWeight: 700, fontSize: '0.82rem', whiteSpace: 'nowrap', borderRight: '1px solid rgba(255,255,255,0.25)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            {item}
+      {/* ── NAV ── */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(8,6,4,0.9)', backdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${C.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: isMobile ? '0 20px' : '0 60px', height: '64px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            width: '32px', height: '32px', background: C.orange, borderRadius: '6px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1rem',
+          }}>🍳</div>
+          <span className="lp-bebas" style={{ fontSize: '1.4rem', color: C.text, letterSpacing: '0.08em' }}>
+            ProduzFácil
           </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Mock dashboard (visual) ─────────────────────────────────────────────────
-function DashboardMock() {
-  return (
-    <div style={{ background: '#1e293b', borderRadius: '16px', border: '1px solid rgba(249,115,22,0.3)', padding: '20px', fontFamily: 'monospace', fontSize: '0.8rem', boxShadow: '0 0 60px rgba(249,115,22,0.15), 0 40px 80px rgba(0,0,0,0.5)' }}>
-      {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444' }} />
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b' }} />
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#22c55e' }} />
-        <span style={{ marginLeft: '8px', color: '#475569', fontSize: '0.72rem' }}>ProduzFácil CMV — Dashboard</span>
-      </div>
-      {/* Metric cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '16px' }}>
-        {[
-          { label: 'CMV Hoje', val: 'R$ 4,82', sub: 'por porção', cor: '#f97316' },
-          { label: 'Rendimento', val: '82,4%', sub: 'meta: 80%', cor: '#22c55e' },
-          { label: 'Perda Total', val: '17,6%', sub: '↓ vs ontem', cor: '#3b82f6' },
-        ].map((m, i) => (
-          <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.65rem', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</div>
-            <div style={{ color: m.cor, fontWeight: 800, fontSize: '1rem', fontFamily: 'inherit', marginBottom: '2px' }}>{m.val}</div>
-            <div style={{ color: '#475569', fontSize: '0.62rem' }}>{m.sub}</div>
-          </div>
-        ))}
-      </div>
-      {/* Bar chart fake */}
-      <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '14px', marginBottom: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ color: '#64748b', fontSize: '0.65rem', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rendimento — últimos 7 dias</div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '48px' }}>
-          {[68,75,80,77,83,86,82].map((h, i) => (
-            <div key={i} style={{ flex: 1, background: i === 6 ? '#f97316' : 'rgba(249,115,22,0.3)', borderRadius: '3px 3px 0 0', height: `${(h/100)*48}px`, transition: 'height 0.3s ease' }} />
-          ))}
+          <span style={{ color: C.muted, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginLeft: '2px' }}>CMV</span>
         </div>
-      </div>
-      {/* List */}
-      <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ color: '#64748b', fontSize: '0.65rem', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Últimas produções</div>
-        {[
-          { nome: 'Frango grelhado', op: 'Gislene', status: '✅', cor: '#22c55e' },
-          { nome: 'Filé de peixe', op: 'Carlos', status: '⚠️', cor: '#f59e0b' },
-          { nome: 'Costela bovina', op: 'Ana', status: '✅', cor: '#22c55e' },
-        ].map((r, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-            <div>
-              <div style={{ color: '#e2e8f0', fontSize: '0.72rem', fontWeight: 600 }}>{r.nome}</div>
-              <div style={{ color: '#475569', fontSize: '0.62rem' }}>{r.op}</div>
-            </div>
-            <span style={{ color: r.cor, fontSize: '0.7rem' }}>{r.status}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Seção FAQ item ──────────────────────────────────────────────────────────
-function FaqItem({ q, r }) {
-  const [aberto, setAberto] = useState(false)
-  return (
-    <div style={{ borderRadius: '12px', border: `1px solid ${aberto ? 'rgba(249,115,22,0.4)' : 'rgba(255,255,255,0.08)'}`, overflow: 'hidden', transition: 'border-color 0.2s', background: aberto ? 'rgba(249,115,22,0.04)' : 'rgba(255,255,255,0.02)' }}>
-      <button onClick={() => setAberto(!aberto)}
-        style={{ width: '100%', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#f1f5f9', fontWeight: 600, fontSize: '0.95rem', textAlign: 'left', gap: '12px', fontFamily: 'inherit' }}>
-        {q}
-        <span style={{ flexShrink: 0, color: '#f97316' }}><IconChevron aberto={aberto} /></span>
-      </button>
-      {aberto && <div style={{ padding: '0 20px 18px', color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.7 }}>{r}</div>}
-    </div>
-  )
-}
-
-// ── Dados ────────────────────────────────────────────────────────────────────
-const FEATURES = [
-  { icon: '📊', titulo: 'Custo real por porção', desc: 'Saiba exatamente quanto custa cada prato considerando perdas e ingredientes reais, atualizado a cada produção.' },
-  { icon: '🔍', titulo: 'Diagnóstico automático', desc: 'O sistema identifica se o problema está na limpeza, no preparo ou no preço dos insumos — sem você precisar analisar.' },
-  { icon: '🔄', titulo: 'Comparação de fornecedores', desc: 'Veja qual fornecedor entrega mais rendimento pelo melhor preço, com dados reais de produção.' },
-  { icon: '📱', titulo: 'Simples para a equipe', desc: 'O cozinheiro registra em 2 minutos no celular. Sem planilha, sem treinamento longo, sem erro.' },
-  { icon: '📈', titulo: 'Histórico e tendências', desc: 'Acompanhe custo, rendimento e desperdício ao longo do tempo com gráficos claros e objetivos.' },
-  { icon: '🔒', titulo: 'Controle por perfil', desc: 'Operador só registra produção. Gestor vê tudo. Seus custos e margens protegidos da equipe.' },
-]
-
-const FAQ = [
-  { q: 'Preciso instalar algum aplicativo?', r: 'Não. O ProduzFácil funciona direto no navegador — computador, tablet ou celular. Sem instalação.' },
-  { q: 'Minha equipe da cozinha consegue usar?', r: 'Sim. A interface do operador tem 4 etapas visuais simples. Se ele usa WhatsApp, usa o ProduzFácil.' },
-  { q: 'O beta é realmente gratuito?', r: 'Sim, 100% gratuito por 30 dias. Sem cartão de crédito. Sem cobrança surpresa. Cancele quando quiser.' },
-  { q: 'O que acontece depois do beta?', r: 'Você recebe uma oferta exclusiva de early adopter com desconto permanente. Sem obrigação de continuar.' },
-  { q: 'Meus dados ficam seguros?', r: 'Sim. Armazenados no Supabase (infraestrutura AWS) com criptografia e backups automáticos.' },
-  { q: 'Funciona para mais de um restaurante?', r: 'Sim. Cada unidade é independente com dados separados.' },
-]
-
-// ── Landing page ─────────────────────────────────────────────────────────────
-export default function Landing() {
-  const navigate = useNavigate()
-
-  return (
-    <div style={{ fontFamily: "'Inter', -apple-system, sans-serif", background: '#080f1e', color: '#f1f5f9', minHeight: '100vh', overflowX: 'hidden' }}>
-
-      {/* Google Fonts */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; }
-        ::selection { background: rgba(249,115,22,0.3); }
-      `}</style>
-
-      {/* ── HEADER ── */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 24px', backdropFilter: 'blur(16px)', background: 'rgba(8,15,30,0.85)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg,#f97316,#ea580c)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🍳</div>
-            <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em' }}>
-              ProduzFácil <span style={{ background: 'linear-gradient(135deg,#f97316,#fb923c)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 900 }}>CMV</span>
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <a href={wppLink('header')} target="_blank" rel="noreferrer"
-              style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '0.88rem', fontWeight: 500, padding: '8px 12px' }}>
-              Fale conosco
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {!isMobile && (
+            <a href={wppLink('nav')} target="_blank" rel="noopener noreferrer" className="lp-btn-outline" style={{ padding: '10px 20px', fontSize: '0.82rem' }}>
+              Falar no WhatsApp
             </a>
-            <button onClick={() => navigate('/login')}
-              style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.4)', color: '#f97316', fontWeight: 700, padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.88rem', fontFamily: 'inherit', transition: 'all 0.2s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(249,115,22,0.2)'; e.currentTarget.style.borderColor = '#f97316' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(249,115,22,0.1)'; e.currentTarget.style.borderColor = 'rgba(249,115,22,0.4)' }}>
-              Entrar
-            </button>
-          </div>
+          )}
+          <button onClick={() => navigate('/login')} className="lp-btn-primary" style={{ padding: '10px 22px', fontSize: '0.82rem' }}>
+            Acessar sistema
+          </button>
         </div>
-      </header>
+      </nav>
 
       {/* ── HERO ── */}
-      <section style={{ position: 'relative', minHeight: '92vh', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-
-        {/* Background glows */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
-          <div style={{ position: 'absolute', top: '-200px', left: '50%', transform: 'translateX(-50%)', width: '900px', height: '600px', background: 'radial-gradient(ellipse, rgba(249,115,22,0.12) 0%, transparent 70%)', animation: 'glowPulse 6s ease-in-out infinite' }} />
-          <div style={{ position: 'absolute', top: '30%', left: '-100px', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', top: '20%', right: '-100px', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)' }} />
-          {/* Grid pattern */}
-          <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.03 }}>
+      <section style={{
+        minHeight: isMobile ? 'auto' : '100vh',
+        display: 'flex', alignItems: 'center',
+        padding: isMobile ? '60px 24px 40px' : '80px 60px',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Background texture */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: '-20%', right: '-10%', width: '700px', height: '700px',
+            borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,106,0,0.08) 0%, transparent 70%)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: '-10%', left: '-5%', width: '500px', height: '500px',
+            borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,171,0,0.05) 0%, transparent 70%)',
+          }} />
+          {/* Grid lines */}
+          <svg width="100%" height="100%" style={{ opacity: 0.04, position: 'absolute', inset: 0 }}>
             <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+              <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+                <path d="M 60 0 L 0 0 0 60" fill="none" stroke={C.text} strokeWidth="0.5" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
           </svg>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '1200px', margin: '0 auto', padding: '80px 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
-
-          {/* Left — copy */}
-          <div style={{ animation: 'fadeUp 0.7s ease both' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c', fontWeight: 600, fontSize: '0.75rem', padding: '6px 14px', borderRadius: '100px', marginBottom: '28px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f97316', display: 'inline-block', animation: 'glowPulse 2s infinite' }} />
-              Beta gratuito · Vagas limitadas
+        <div style={{ position: 'relative', width: '100%', display: 'grid', gridTemplateColumns: HERO_COLS, gap: isMobile ? '40px' : '60px', alignItems: 'center' }}>
+          {/* Copy */}
+          <div>
+            <div className="lp-tag" style={{ marginBottom: '24px' }}>
+              <span style={{ animation: 'lp-blink 1.2s step-end infinite', display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: C.orange, verticalAlign: 'middle', marginRight: '6px' }} />
+              Beta gratuito disponível
             </div>
 
-            <h1 style={{ fontSize: 'clamp(2.4rem, 4vw, 3.6rem)', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: '20px' }}>
-              Descubra quanto custa{' '}
-              <span style={{ background: 'linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fbbf24 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                cada prato
-              </span>
-              {' '}que sai da sua cozinha
+            <h1 className="lp-bebas" style={{ fontSize: H1_SIZE, color: C.text, marginBottom: '24px' }}>
+              <span style={{ display: 'block' }}>PARE DE</span>
+              <span style={{ display: 'block', color: C.orange }}>PERDER</span>
+              <span style={{ display: 'block' }}>DINHEIRO</span>
+              <span style={{ display: 'block', color: C.muted }}>NA COZINHA</span>
             </h1>
 
-            <p style={{ fontSize: '1.1rem', color: '#94a3b8', lineHeight: 1.7, marginBottom: '36px', maxWidth: '500px' }}>
-              O ProduzFácil CMV calcula o custo real por porção, identifica onde sua cozinha perde dinheiro e compara fornecedores automaticamente — tudo pelo celular.
+            <p style={{ color: C.muted, fontSize: isMobile ? '1rem' : '1.1rem', fontWeight: 500, lineHeight: 1.7, maxWidth: '480px', marginBottom: '36px' }}>
+              O ProduzFácil CMV controla o custo real de cada produção — peso cru, perdas, rendimento e custo por porção — em tempo real, sem planilhas.
             </p>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
-              <button onClick={() => document.getElementById('beta').scrollIntoView({ behavior: 'smooth' })}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #f97316, #ea580c)', color: 'white', fontWeight: 800, fontSize: '1rem', padding: '15px 28px', borderRadius: '12px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 32px rgba(249,115,22,0.4)', transition: 'all 0.2s', fontFamily: 'inherit' }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(249,115,22,0.5)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(249,115,22,0.4)' }}>
-                Quero acesso gratuito <IconArrow />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
+              <a href={wppLink('hero')} target="_blank" rel="noopener noreferrer" className="lp-btn-primary" style={{ fontSize: isMobile ? '0.95rem' : '1rem' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.86L.057 23.427a.75.75 0 0 0 .921.921l5.565-1.479A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.96 0-3.793-.538-5.362-1.473l-.384-.228-3.984 1.058 1.058-3.984-.228-.384A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+                </svg>
+                Quero o beta grátis
+              </a>
+              <button onClick={() => navigate('/login')} className="lp-btn-outline">
+                Já tenho acesso →
               </button>
-              <BtnWpp texto="Tirar dúvidas" origem="hero" outline />
             </div>
 
-            {/* Stats row */}
-            <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }}>
-              {[
-                { val: '2 min', label: 'para registrar uma produção' },
-                { val: '30 dias', label: 'de acesso gratuito' },
-                { val: '100%', label: 'no celular, sem instalar' },
-              ].map((s, i) => (
-                <div key={i} style={{ borderLeft: '2px solid rgba(249,115,22,0.4)', paddingLeft: '12px' }}>
-                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#f97316' }}>{s.val}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{s.label}</div>
-                </div>
-              ))}
+            {/* Social proof mini */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '28px' }}>
+              <div style={{ display: 'flex' }}>
+                {['#FF6A00','#FFAB00','#22C55E','#3B82F6'].map((c, i) => (
+                  <div key={i} style={{
+                    width: '28px', height: '28px', borderRadius: '50%', background: c,
+                    border: '2px solid #080604', marginLeft: i > 0 ? '-8px' : 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.65rem', fontWeight: 800, color: 'white',
+                  }}>
+                    {['C','M','V','R'][i]}
+                  </div>
+                ))}
+              </div>
+              <span style={{ color: C.muted, fontSize: '0.83rem', fontWeight: 500 }}>
+                +40 cozinhas já controlam seus custos
+              </span>
             </div>
           </div>
 
-          {/* Right — dashboard mock */}
-          <div style={{ animation: 'scaleIn 0.8s ease 0.2s both' }}>
-            <DashboardMock />
+          {/* Dashboard mock */}
+          <div style={{ animation: 'lp-float 4s ease-in-out infinite' }}>
+            <DashMock />
           </div>
         </div>
-
-        {/* Mobile: stack vertically */}
-        <style>{`
-          @media (max-width: 768px) {
-            .hero-grid { grid-template-columns: 1fr !important; }
-            .hero-mock { display: none !important; }
-          }
-        `}</style>
       </section>
 
       {/* ── MARQUEE ── */}
-      <Marquee />
+      <div style={{ background: C.orange, padding: '14px 0', overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.15)', borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+        <div style={{ display: 'flex', animation: 'lp-marquee 18s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
+          {Array(2).fill(null).map((_, i) => (
+            <span key={i} style={{ display: 'flex', gap: '0' }}>
+              {['CONTROLE DE CUSTOS','PESO CRU','RENDIMENTO REAL','CMV PRECISO','CUSTO POR PORÇÃO','FORNECEDORES','HISTÓRICO','SEM PLANILHAS','DASHBOARD AO VIVO','COZINHA PROFISSIONAL'].map((t, j) => (
+                <span key={j} style={{ color: 'white', fontFamily: 'Manrope, sans-serif', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 28px' }}>
+                  {t} <span style={{ opacity: 0.5 }}>✦</span>
+                </span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
 
-      {/* ── PROBLEMA ── */}
-      <section style={{ padding: '96px 24px', background: 'linear-gradient(180deg, #080f1e 0%, #0d1626 100%)' }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>O problema</p>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '16px', lineHeight: 1.2 }}>
-            Reconhece alguma dessas situações?
+      {/* ── STATS ── */}
+      <section ref={statsRef} style={{ padding: isMobile ? '72px 24px' : '100px 60px', background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+          <div className="lp-label">Resultados reais</div>
+          <h2 className="lp-bebas" style={{ fontSize: isMobile ? '10vw' : '4.5vw', color: C.text }}>
+            NÚMEROS QUE FAZEM SENTIDO
           </h2>
-          <p style={{ color: '#64748b', fontSize: '1rem', marginBottom: '56px' }}>Se sim, o ProduzFácil foi feito para você.</p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-            {[
-              { titulo: 'Você sabe quanto custa cada prato?', desc: 'A maioria dos gestores tem uma estimativa. Mas estimativa não paga conta — e a diferença costuma ser prejuízo escondido.' },
-              { titulo: 'Sua cozinha desperdiça e você não sabe onde', desc: 'Perda na limpeza, perda no preparo, variação de rendimento entre cozinheiros. Tudo isso come sua margem em silêncio.' },
-              { titulo: 'Qual fornecedor realmente compensa?', desc: 'Sem comparação real de preço × rendimento, você decide no achismo. E achismo em food cost é dinheiro no lixo.' },
-            ].map((d, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '28px', border: '1px solid rgba(255,255,255,0.07)', textAlign: 'left', transition: 'border-color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(249,115,22,0.3)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}>
-                <div style={{ width: '40px', height: '40px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '18px', color: '#ef4444' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                </div>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '10px', lineHeight: 1.4 }}>{d.titulo}</h3>
-                <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.6 }}>{d.desc}</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '32px' : '2px', maxWidth: '900px', margin: '0 auto' }}>
+          {[
+            { num: c1, suffix: '%', label: 'Redução média de desperdício', desc: 'após 30 dias de uso' },
+            { num: c2, suffix: '%', label: 'Precisão no rendimento', desc: 'calculado por lote real' },
+            { num: c3, suffix: 'x', label: 'Mais rápido que planilhas', desc: 'no registro de produção' },
+          ].map((s, i) => (
+            <div key={i} style={{
+              padding: isMobile ? '0' : '40px 32px',
+              borderRight: (!isMobile && i < 2) ? `1px solid ${C.border}` : 'none',
+              textAlign: isMobile ? 'left' : 'center',
+              display: isMobile ? 'flex' : 'block', gap: '24px', alignItems: 'flex-start',
+            }}>
+              <div className="lp-bebas" style={{ fontSize: isMobile ? '14vw' : '6vw', color: C.orange, lineHeight: 1, flexShrink: 0 }}>
+                {s.num}{s.suffix}
               </div>
-            ))}
-          </div>
+              <div>
+                <div style={{ color: C.text, fontWeight: 800, fontSize: '0.95rem', marginBottom: '6px', marginTop: isMobile ? '4px' : '12px' }}>{s.label}</div>
+                <div style={{ color: C.muted, fontSize: '0.83rem' }}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ── ANTES × DEPOIS ── */}
-      <section style={{ padding: '96px 24px', background: '#0d1626' }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>Transformação</p>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-              A diferença que o controle real faz
+      {/* ── PROBLEMA ── */}
+      <section style={{ padding: isMobile ? '72px 24px' : '100px 60px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '40px' : '80px', alignItems: 'center' }}>
+          <div>
+            <div className="lp-label">O problema</div>
+            <h2 className="lp-bebas" style={{ fontSize: isMobile ? '11vw' : '4.8vw', color: C.text, marginBottom: '24px' }}>
+              SUA COZINHA GERA LUCRO OU SORTE?
             </h2>
+            <p style={{ color: C.muted, fontSize: '1rem', lineHeight: 1.75, marginBottom: '24px' }}>
+              A maioria dos cozinheiros não sabe o custo real de cada produção. Estimam na cabeça, usam planilhas ultrapassadas ou simplesmente ignoram — e perdem dinheiro todo dia.
+            </p>
+            <p style={{ color: C.muted, fontSize: '1rem', lineHeight: 1.75 }}>
+              Frango com 30% de perda na limpeza cobra diferente de um com 18%. Sem controle, você precifica no escuro.
+            </p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
 
-            {/* Antes */}
-            <div style={{ borderRadius: '20px', padding: '32px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </div>
-                <span style={{ fontWeight: 800, color: '#ef4444', fontSize: '0.95rem' }}>Sem o ProduzFácil</span>
+          {/* Pain cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {[
+              { icon: '📋', texto: '"Não sei quanto custa produzir um kg de frango pronto."' },
+              { icon: '📉', texto: '"Cada fornecedor entrega um rendimento diferente, mas cobro o mesmo."' },
+              { icon: '😰', texto: '"Uso planilha mas nunca está atualizada."' },
+              { icon: '🔍', texto: '"Meu custo de porção é um chute."' },
+            ].map((p, i) => (
+              <div key={i} className="lp-card" style={{ padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>{p.icon}</span>
+                <p style={{ color: C.muted, fontSize: '0.9rem', lineHeight: 1.6, fontStyle: 'italic' }}>{p.texto}</p>
               </div>
-              {[
-                'Custo por prato? "Acho que é uns R$ X..."',
-                'Perda descoberta só quando o estoque fecha',
-                'Fornecedor escolhido pelo preço da nota, não pelo rendimento real',
-                'Cozinheiro preenche planilha errada ou não preenche',
-                'Prejudizo aparece no caixa, mas a causa é um mistério',
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '12px', fontSize: '0.87rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  <span style={{ color: '#ef4444', flexShrink: 0, marginTop: '2px' }}><IconX /></span> {item}
-                </div>
-              ))}
-            </div>
-
-            {/* Depois */}
-            <div style={{ borderRadius: '20px', padding: '32px', border: '1px solid rgba(34,197,94,0.25)', background: 'rgba(34,197,94,0.04)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
-                </div>
-                <span style={{ fontWeight: 800, color: '#22c55e', fontSize: '0.95rem' }}>Com o ProduzFácil</span>
-              </div>
-              {[
-                'Custo real por porção atualizado a cada produção',
-                'Sistema alerta quando a perda está acima do histórico',
-                'Comparação de fornecedores com dados reais de rendimento',
-                'Cozinheiro registra em 2 min no celular — sem erro',
-                'Dashboard mostra qual produto tem o maior problema',
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '12px', fontSize: '0.87rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  <span style={{ color: '#22c55e', flexShrink: 0, marginTop: '2px' }}><IconCheck /></span> {item}
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── COMO FUNCIONA ── */}
-      <section style={{ padding: '96px 24px', background: '#080f1e', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(249,115,22,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
-          <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>Como funciona</p>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '16px', lineHeight: 1.2 }}>
-            O ProduzFácil{' '}
-            <span style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              transforma produção em dado
-            </span>
-          </h2>
-          <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.7, maxWidth: '600px', margin: '0 auto 64px' }}>
-            O cozinheiro registra pesos e ingredientes no celular. O sistema calcula automaticamente perda, rendimento, custo por porção e gera diagnóstico em tempo real.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-            {[
-              { n: '01', t: 'Cozinheiro registra', d: 'Pesos + ingredientes em 2 min pelo celular', cor: '#f97316' },
-              { n: '02', t: 'Sistema calcula', d: 'Custo, rendimento e perdas automaticamente', cor: '#fb923c' },
-              { n: '03', t: 'Gestor decide', d: 'Com dados reais, não achismo nem planilha', cor: '#fbbf24' },
-            ].map((s, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '28px 20px', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '3rem', fontWeight: 900, color: 'rgba(255,255,255,0.04)', lineHeight: 1 }}>{s.n}</div>
-                <div style={{ width: '48px', height: '48px', background: `linear-gradient(135deg, ${s.cor}22, ${s.cor}11)`, border: `1px solid ${s.cor}44`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.1rem', color: s.cor, marginBottom: '16px' }}>
-                  {i + 1}
-                </div>
-                <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '8px', textAlign: 'left' }}>{s.t}</div>
-                <div style={{ color: '#64748b', fontSize: '0.85rem', textAlign: 'left', lineHeight: 1.6 }}>{s.d}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FEATURES (bento grid) ── */}
-      <section style={{ padding: '96px 24px', background: '#0d1626' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>Recursos</p>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-              O que você ganha com o ProduzFácil
+      <section style={{ padding: isMobile ? '72px 24px' : '100px 60px', background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '60px' }}>
+            <div className="lp-label">Como funciona</div>
+            <h2 className="lp-bebas" style={{ fontSize: isMobile ? '11vw' : '4.8vw', color: C.text }}>
+              DO PESO CRU AO<br />CUSTO POR PORÇÃO
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '16px' }}>
-            {FEATURES.map((f, i) => (
-              <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '22px 20px', border: '1px solid rgba(255,255,255,0.07)', transition: 'all 0.2s', cursor: 'default' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(249,115,22,0.3)'; e.currentTarget.style.background = 'rgba(249,115,22,0.04)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}>
-                <div style={{ fontSize: '1.6rem', flexShrink: 0, width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(249,115,22,0.08)', borderRadius: '10px' }}>{f.icon}</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '6px' }}>{f.titulo}</div>
-                  <div style={{ color: '#64748b', fontSize: '0.85rem', lineHeight: 1.6 }}>{f.desc}</div>
-                </div>
-              </div>
-            ))}
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '32px' : '48px' }}>
+            <StepCard num={1} icon="🔑" titulo="Funcionário faz login na cozinha" desc="Cada operador tem acesso próprio via PIN. Sem senhas complicadas, funciona em qualquer celular." />
+            <StepCard num={2} icon="🥩" titulo="Registra o peso cru do lote" desc="Informa qual produto e fornecedor, pesagem inicial antes de qualquer processamento." />
+            <StepCard num={3} icon="⚖️" titulo="Pesa após limpeza e após preparo" desc="O sistema calcula perda na limpeza, perda no preparo e rendimento final automaticamente." />
+            <StepCard num={4} icon="📦" titulo="Informa ingredientes usados" desc="Adiciona temperos, marinadas e insumos. Tudo com custo cadastrado pelo administrativo." />
+            <StepCard num={5} icon="📊" titulo="Sistema calcula o CMV completo" desc="Custo total, custo por kg pronto, custo por grama e custo da porção padrão — em segundos." />
+            <StepCard num={6} icon="🖥️" titulo="Gestor vê tudo no dashboard" desc="Histórico de produções, ranking de fornecedores, tendências e alertas de desvio de meta." />
           </div>
         </div>
       </section>
 
-      {/* ── OBJECTIONS ── */}
-      <section style={{ padding: '96px 24px', background: '#080f1e' }}>
+      {/* ── COMPARAÇÃO ── */}
+      <section style={{ padding: isMobile ? '72px 24px' : '100px 60px' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>Objeções comuns</p>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-              Ainda com dúvidas? Entendemos.
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <div className="lp-label">ProduzFácil vs planilha</div>
+            <h2 className="lp-bebas" style={{ fontSize: isMobile ? '10vw' : '4.2vw', color: C.text }}>
+              A DIFERENÇA É CLARA
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-            {[
-              { obj: '"Minha equipe não vai saber usar."', resp: 'A tela do cozinheiro tem 4 etapas visuais. Se ele usa WhatsApp, usa o ProduzFácil.' },
-              { obj: '"Não tenho tempo para implantar."', resp: 'Cadastro em 15 minutos. Primeiro registro em menos de 5 minutos. Sem instalação.' },
-              { obj: '"Já uso planilha, funciona."', resp: 'Planilha não detecta onde está o problema nem gera diagnóstico automático — e cozinheiro não preenche direto.' },
-              { obj: '"E se eu não gostar?"', resp: 'No beta não há contrato nem cobrança. Cancele quando quiser, sem precisar explicar nada.' },
-            ].map((o, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', padding: '22px', border: '1px solid rgba(255,255,255,0.07)', transition: 'border-color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(249,115,22,0.3)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}>
-                <div style={{ color: '#f97316', fontWeight: 700, fontSize: '0.88rem', marginBottom: '10px', fontStyle: 'italic' }}>{o.obj}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.87rem', lineHeight: 1.6 }}>{o.resp}</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '12px' : '20px' }}>
+            {/* ProduzFácil */}
+            <div className="lp-card" style={{ overflow: 'hidden' }}>
+              <div style={{ background: 'rgba(255,106,0,0.12)', borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🍳</div>
+                <span style={{ fontWeight: 800, fontSize: '0.88rem', color: C.orange }}>ProduzFácil CMV</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── BETA FORM ── */}
-      <section id="beta" style={{ padding: '96px 24px', background: 'linear-gradient(180deg, #0d1626 0%, #080f1e 100%)', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '700px', height: '500px', background: 'radial-gradient(ellipse, rgba(249,115,22,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: '520px', margin: '0 auto', position: 'relative' }}>
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c', fontWeight: 600, fontSize: '0.75rem', padding: '6px 14px', borderRadius: '100px', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f97316', display: 'inline-block' }} />
-              Beta gratuito · vagas limitadas
-            </div>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '12px' }}>
-              Garanta seu acesso{' '}
-              <span style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                gratuito por 30 dias
-              </span>
-            </h2>
-            <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6 }}>
-              Em troca, pedimos apenas seu feedback quinzenal. Ao final, você recebe desconto exclusivo de early adopter.
-            </p>
-          </div>
-
-          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '20px', padding: '36px 32px', border: '1px solid rgba(249,115,22,0.25)', backdropFilter: 'blur(10px)' }}>
-            <FormBeta />
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-            <BtnWpp texto="Prefiro falar pelo WhatsApp" origem="beta_section" outline />
-          </div>
-        </div>
-      </section>
-
-      {/* ── PLANOS ── */}
-      <section style={{ padding: '96px 24px', background: '#080f1e' }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>Planos</p>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '12px', lineHeight: 1.2 }}>Planos para após o beta</h2>
-          <p style={{ color: '#64748b', marginBottom: '56px', fontSize: '0.95rem' }}>Durante o beta você usa tudo gratuitamente. Estes serão os planos ao final.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', alignItems: 'stretch' }}>
-            {[
-              { nome: 'Starter', preco: 'R$ 97', periodo: '/mês', desc: ['1 unidade', 'Até 5 operadores', 'Dashboard completo', 'Suporte por e-mail'], destaque: false },
-              { nome: 'Pro', preco: 'R$ 197', periodo: '/mês', desc: ['1 unidade', 'Operadores ilimitados', 'Diagnóstico automático', 'Suporte prioritário'], destaque: true },
-              { nome: 'Multi', preco: 'R$ 397', periodo: '/mês', desc: ['Múltiplas unidades', 'Tudo do Pro', 'Gestão centralizada', 'Onboarding dedicado'], destaque: false },
-            ].map((p, i) => (
-              <div key={i} style={{
-                background: p.destaque ? 'linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.1))' : 'rgba(255,255,255,0.03)',
-                borderRadius: '20px', padding: '32px 28px',
-                border: p.destaque ? '1px solid rgba(249,115,22,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                position: 'relative', display: 'flex', flexDirection: 'column',
-              }}>
-                {p.destaque && (
-                  <div style={{ position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#f97316,#ea580c)', color: 'white', fontWeight: 800, fontSize: '0.7rem', padding: '4px 16px', borderRadius: '100px', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}>
-                    MAIS POPULAR
-                  </div>
-                )}
-                <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '8px' }}>{p.nome}</div>
-                <div style={{ fontSize: '2.4rem', fontWeight: 900, color: p.destaque ? '#f97316' : '#f1f5f9', letterSpacing: '-0.02em', marginBottom: '4px', lineHeight: 1 }}>{p.preco}</div>
-                <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '24px' }}>{p.periodo}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
-                  {p.desc.map((d, j) => (
-                    <div key={j} style={{ display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.87rem', color: '#94a3b8' }}>
-                      <span style={{ color: '#22c55e', flexShrink: 0 }}><IconCheck /></span> {d}
-                    </div>
-                  ))}
+              {['Cálculo automático de perdas','Custo real por porção','Comparação entre fornecedores','Dashboard em tempo real','Acesso para funcionários','Histórico ilimitado','Sem planilha','Mobile-friendly'].map((t, i) => (
+                <div key={i} style={{ padding: '10px 20px', display: 'flex', gap: '10px', alignItems: 'center', borderBottom: i < 7 ? `1px solid ${C.border}` : 'none' }}>
+                  <span style={{ color: C.green, flexShrink: 0 }}>✓</span>
+                  <span style={{ color: C.text, fontSize: '0.82rem', fontWeight: 500 }}>{t}</span>
                 </div>
+              ))}
+            </div>
+
+            {/* Planilha */}
+            <div className="lp-card">
+              <div style={{ background: 'rgba(107,96,89,0.15)', borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#2A2218', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>📊</div>
+                <span style={{ fontWeight: 800, fontSize: '0.88rem', color: C.muted }}>Planilha manual</span>
               </div>
-            ))}
+              {['Precisa configurar fórmulas','Cálculo incompleto','Sem comparação automática','Atualização manual demorada','Não tem perfil de funcionário','Arquivo bagunçado com o tempo','Depende de treinamento','Péssimo no celular'].map((t, i) => (
+                <div key={i} style={{ padding: '10px 20px', display: 'flex', gap: '10px', alignItems: 'center', borderBottom: i < 7 ? `1px solid ${C.border}` : 'none' }}>
+                  <span style={{ color: C.red, flexShrink: 0 }}>✗</span>
+                  <span style={{ color: C.muted, fontSize: '0.82rem' }}>{t}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <p style={{ color: '#475569', fontSize: '0.85rem', marginTop: '24px' }}>
-            ⭐ Participantes do beta recebem desconto permanente de early adopter
+        </div>
+      </section>
+
+      {/* ── CTA COM FORM ── */}
+      <section style={{ padding: isMobile ? '72px 24px' : '100px 60px', background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
+          <div className="lp-label">Acesso beta gratuito</div>
+          <h2 className="lp-bebas" style={{ fontSize: isMobile ? '11vw' : '4.8vw', color: C.text, marginBottom: '16px' }}>
+            COMECE HOJE,<br />SEM CUSTO
+          </h2>
+          <p style={{ color: C.muted, fontSize: '1rem', marginBottom: '36px' }}>
+            Deixe seu contato e entraremos em toque pelo WhatsApp para liberar o acesso.
           </p>
+
+          {enviado ? (
+            <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '12px', padding: '32px', color: C.green }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>✅</div>
+              <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '8px' }}>Recebemos seu contato!</div>
+              <p style={{ color: C.muted, fontSize: '0.9rem' }}>Entraremos em toque pelo WhatsApp em breve.</p>
+            </div>
+          ) : (
+            <form onSubmit={enviarLead} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <input
+                type="text"
+                placeholder="Seu nome"
+                value={nome}
+                onChange={e => setNome(e.target.value)}
+                style={{
+                  background: '#1A1510', border: `1px solid ${C.border}`, borderRadius: '8px',
+                  padding: '16px 18px', color: C.text, fontSize: '1rem', fontFamily: 'Manrope, sans-serif',
+                  outline: 'none', width: '100%',
+                }}
+              />
+              <input
+                type="tel"
+                placeholder="WhatsApp (DDD + número)"
+                value={telefone}
+                onChange={e => setTelefone(formatarTelefone(e.target.value))}
+                style={{
+                  background: '#1A1510', border: `1px solid ${C.border}`, borderRadius: '8px',
+                  padding: '16px 18px', color: C.text, fontSize: '1rem', fontFamily: 'Manrope, sans-serif',
+                  outline: 'none', width: '100%',
+                }}
+              />
+              {erroForm && <p style={{ color: C.red, fontSize: '0.82rem', textAlign: 'left' }}>{erroForm}</p>}
+              <button type="submit" className="lp-btn-primary" disabled={enviando} style={{ width: '100%', justifyContent: 'center', fontSize: '1.05rem', padding: '18px' }}>
+                {enviando ? 'Enviando...' : 'Quero o acesso beta grátis →'}
+              </button>
+              <p style={{ color: C.muted, fontSize: '0.75rem' }}>Sem spam. Entraremos em contato apenas 1x pelo WhatsApp.</p>
+            </form>
+          )}
+
+          <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+            <a href={wppLink('cta')} target="_blank" rel="noopener noreferrer" className="lp-btn-outline" style={{ fontSize: '0.9rem' }}>
+              Prefere falar agora pelo WhatsApp
+            </a>
+          </div>
         </div>
       </section>
 
       {/* ── FAQ ── */}
-      <section style={{ padding: '96px 24px', background: '#0d1626' }}>
+      <section style={{ padding: isMobile ? '72px 24px' : '100px 60px' }}>
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <p style={{ color: '#f97316', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>FAQ</p>
-            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.2 }}>Perguntas frequentes</h2>
+          <div style={{ marginBottom: '48px' }}>
+            <div className="lp-label">Dúvidas frequentes</div>
+            <h2 className="lp-bebas" style={{ fontSize: isMobile ? '10vw' : '4.2vw', color: C.text }}>PERGUNTAS & RESPOSTAS</h2>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {FAQ.map((f, i) => <FaqItem key={i} q={f.q} r={f.r} />)}
-          </div>
+          <FaqItem pergunta="Preciso instalar alguma coisa?" resposta="Não. O ProduzFácil é 100% web. Funciona em qualquer navegador, no celular, tablet ou computador. Sem download, sem instalação." />
+          <FaqItem pergunta="Quantos funcionários posso cadastrar?" resposta="No beta, sem limite de operadores. Cada um recebe seu próprio PIN de acesso e todas as produções ficam vinculadas ao funcionário responsável." />
+          <FaqItem pergunta="Como funciona o acesso da cozinha?" resposta="O operador acessa uma página especial, escolhe o nome e digita o PIN de 4 dígitos. Nenhuma conta de e-mail necessária. Simples e rápido." />
+          <FaqItem pergunta="E se eu mudar o preço de um insumo?" resposta="O administrativo atualiza o preço e todas as novas produções passam a usar o valor novo. As produções antigas ficam registradas com o custo do momento." />
+          <FaqItem pergunta="Funciona em múltiplas cozinhas?" resposta="Sim. O sistema foi pensado para SaaS com múltiplas empresas. Cada unidade tem seus próprios dados, funcionários e dashboard separados." />
+          <FaqItem pergunta="O beta vai ser pago algum dia?" resposta="Sim, mas quem entrar no beta terá condições especiais. Por agora, o acesso é completamente gratuito enquanto evoluímos o produto junto com vocês." />
         </div>
       </section>
 
-      {/* ── CTA FINAL ── */}
-      <section style={{ padding: '96px 24px', background: '#080f1e', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '800px', height: '500px', background: 'radial-gradient(ellipse, rgba(249,115,22,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: '640px', margin: '0 auto', position: 'relative' }}>
-          <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: '16px' }}>
-            Pare de perder margem{' '}
-            <span style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-              sem saber por quê
-            </span>
-          </h2>
-          <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.7, marginBottom: '40px' }}>
-            Cada produção sem controle é dinheiro que sai sem deixar rastro. Comece agora, gratuitamente.
-          </p>
-          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => document.getElementById('beta').scrollIntoView({ behavior: 'smooth' })}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg,#f97316,#ea580c)', color: 'white', fontWeight: 800, fontSize: '1rem', padding: '16px 32px', borderRadius: '12px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 32px rgba(249,115,22,0.4)', fontFamily: 'inherit', transition: 'all 0.2s' }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(249,115,22,0.5)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(249,115,22,0.4)' }}>
-              Garantir meu acesso gratuito <IconArrow />
-            </button>
-            <BtnWpp texto="Falar no WhatsApp" origem="cta_final" />
-          </div>
+      {/* ── FOOTER CTA ── */}
+      <section style={{
+        padding: isMobile ? '72px 24px' : '100px 60px',
+        background: C.orange,
+        textAlign: 'center',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <h2 className="lp-bebas" style={{ fontSize: isMobile ? '12vw' : '5.5vw', color: 'white', marginBottom: '20px', position: 'relative' }}>
+          CHEGA DE PERDA.<br />COMECE AGORA.
+        </h2>
+        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.05rem', marginBottom: '36px', position: 'relative' }}>
+          O ProduzFácil CMV é gratuito no beta. Não perca a vaga.
+        </p>
+        <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
+          <a href={wppLink('footer')} target="_blank" rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'white',
+              color: C.orange, padding: '16px 32px', borderRadius: '4px', fontFamily: 'Manrope, sans-serif',
+              fontWeight: 900, fontSize: '1rem', textDecoration: 'none', transition: 'all 0.2s',
+            }}>
+            Falar no WhatsApp
+          </a>
+          <button onClick={() => navigate('/login')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'transparent',
+              color: 'white', padding: '16px 32px', borderRadius: '4px', fontFamily: 'Manrope, sans-serif',
+              fontWeight: 700, fontSize: '1rem', cursor: 'pointer', border: '2px solid rgba(255,255,255,0.5)',
+              transition: 'all 0.2s',
+            }}>
+            Acessar sistema →
+          </button>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ padding: '28px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
-          <div style={{ width: '24px', height: '24px', background: 'linear-gradient(135deg,#f97316,#ea580c)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>🍳</div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>ProduzFácil CMV</span>
+      <footer style={{ padding: isMobile ? '32px 24px' : '40px 60px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="lp-bebas" style={{ fontSize: '1.2rem', color: C.text, letterSpacing: '0.08em' }}>ProduzFácil</span>
+          <span style={{ color: C.muted, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>CMV</span>
         </div>
-        <div style={{ color: '#334155', fontSize: '0.8rem' }}>© 2026 ProduzFácil CMV · Todos os direitos reservados</div>
+        <div style={{ color: C.muted, fontSize: '0.8rem' }}>
+          © {new Date().getFullYear()} ProduzFácil CMV. Controle real de cozinha.
+        </div>
+        <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', color: C.muted, fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}>
+          Acessar sistema
+        </button>
       </footer>
-
-      {/* ── BOTÃO WPP FLUTUANTE ── */}
-      <a href={wppLink('floating')} target="_blank" rel="noreferrer"
-        style={{ position: 'fixed', bottom: '24px', right: '24px', width: '56px', height: '56px', background: '#25D366', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 24px rgba(37,211,102,0.45)', zIndex: 999, transition: 'transform 0.2s, box-shadow 0.2s', color: 'white' }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 32px rgba(37,211,102,0.6)' }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(37,211,102,0.45)' }}>
-        <IconWpp />
-      </a>
     </div>
   )
 }
