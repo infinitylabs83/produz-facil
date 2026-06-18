@@ -448,14 +448,14 @@ export default function AdminDashboard() {
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={producoesProduto} margin={{ top: 12, right: 24, bottom: 0, left: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--cor-borda)" />
-              <XAxis dataKey="data" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} />
-              <YAxis yAxisId="custo" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} />
-              <YAxis yAxisId="rend" orientation="right" tick={{ fontSize: 11, fill: '#3b82f6' }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+              <CartesianGrid stroke="var(--cor-borda)" strokeOpacity={0.4} vertical={false} />
+              <XAxis dataKey="data" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} axisLine={false} tickLine={false} />
+              <YAxis yAxisId="custo" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} axisLine={false} tickLine={false} />
+              <YAxis yAxisId="rend" orientation="right" tick={{ fontSize: 11, fill: '#3b82f6' }} domain={[0, 100]} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
               <Tooltip content={<TooltipGrafico />} />
               <Legend wrapperStyle={{ fontSize: '0.85rem', paddingTop: '12px' }} />
-              <Line yAxisId="custo" type="monotone" dataKey="Custo/kg R$"  stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} strokeDasharray="6 2" />
-              <Line yAxisId="rend"  type="monotone" dataKey="Rendimento %" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} strokeDasharray="4 4" />
+              <Line yAxisId="custo" type="monotone" dataKey="Custo/kg R$"  stroke="#a855f7" strokeWidth={2.5} dot={{ r: 4, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+              <Line yAxisId="rend"  type="monotone" dataKey="Rendimento %" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -470,7 +470,7 @@ export default function AdminDashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={rendPorProduto} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--cor-borda)" horizontal={false} />
+                <CartesianGrid stroke="var(--cor-borda)" strokeOpacity={0.4} horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `${v}%`} />
                 <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} width={90} />
                 <Tooltip contentStyle={{ background: 'var(--cor-fundo-card)', border: '1px solid var(--cor-borda)', borderRadius: '8px', color: 'var(--cor-texto)' }} formatter={v => `${v}%`} />

@@ -99,7 +99,7 @@ function QRCardPrint({ nomeEmpresa, qrUrl, onFechar }) {
             {/* Footer */}
             <div style={{ background: '#1e293b', padding: '12px 20px', textAlign: 'center' }}>
               <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem' }}>
-                produzfacil.com.br · Escaneie o QR Code acima
+                Escaneie o QR Code acima para acessar a cozinha
               </div>
             </div>
           </div>

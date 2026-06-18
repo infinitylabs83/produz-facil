@@ -542,6 +542,24 @@ tr:hover td {
   .campo-grupo textarea {
     font-size: 16px; /* evita zoom automático no iOS */
   }
+
+  /* Textos maiores nos cards em mobile */
+  .card-titulo {
+    font-size: 0.88rem !important;
+  }
+
+  .card-valor {
+    font-size: 1.75rem !important;
+  }
+
+  .card-subtexto {
+    font-size: 0.88rem !important;
+  }
+
+  /* Gráficos: altura mínima garantida em mobile (quando em coluna única) */
+  .card .recharts-wrapper {
+    min-height: 220px;
+  }
 }
 
 /* ===== DARK MODE ===== */

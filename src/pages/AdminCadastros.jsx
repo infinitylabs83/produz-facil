@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import FichaTecnicaPrint from '../components/FichaTecnicaPrint'
+import ImportarReceitaPDF from '../components/ImportarReceitaPDF'
 
 const ABAS = ['Produtos & Fichas', 'Insumos', 'Fornecedores']
 
@@ -107,6 +108,7 @@ function ProdutosComFicha() {
   const [msg, setMsg]           = useState('')
   const [erro, setErro]         = useState('')
   const [printAberto, setPrintAberto] = useState(false)
+  const [pdfModalAberto, setPdfModalAberto] = useState(false)
 
   // carrega dados iniciais
   useEffect(() => {
@@ -264,6 +266,22 @@ function ProdutosComFicha() {
     if (!window.confirm('Remover este ingrediente da ficha?')) return
     await supabase.from('produto_ingredientes').delete().eq('id', id)
     carregarFicha(selecionado.id)
+  }
+
+  // Salva ingredientes importados via PDF na ficha técnica
+  async function salvarReceitaPDF(ingredientes) {
+    for (const ing of ingredientes) {
+      if (!ing.insumoId) continue
+      // Evita duplicar insumos já existentes na ficha
+      if (ficha.some(f => f.insumo_id === ing.insumoId)) continue
+      await supabase.from('produto_ingredientes').insert({
+        produto_id: selecionado.id,
+        insumo_id: ing.insumoId,
+        quantidade_padrao: ing.qtd || null,
+        unidade_uso: ing.unidade || 'kg',
+      })
+    }
+    await carregarFicha(selecionado.id)
   }
 
   // Custo total de todos os ingredientes
@@ -632,9 +650,19 @@ function ProdutosComFicha() {
               )}
 
               {!adicionandoIng && (
-                <button className="btn btn-secundario" onClick={() => { setAdicionandoIng(true); setErro('') }} style={{ width: '100%', marginTop: '8px' }}>
-                  ＋ Adicionar ingrediente à ficha
-                </button>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button className="btn btn-secundario" onClick={() => { setAdicionandoIng(true); setErro('') }} style={{ flex: 1 }}>
+                    ＋ Adicionar ingrediente
+                  </button>
+                  <button
+                    className="btn btn-secundario"
+                    onClick={() => setPdfModalAberto(true)}
+                    title="Importar receita de um PDF"
+                    style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                  >
+                    📄 Importar PDF
+                  </button>
+                </div>
               )}
             </div>
 
@@ -720,6 +748,16 @@ function ProdutosComFicha() {
           produto={selecionado}
           ficha={ficha}
           onFechar={() => setPrintAberto(false)}
+        />
+      )}
+
+      {/* Modal de importação via PDF */}
+      {pdfModalAberto && selecionado && (
+        <ImportarReceitaPDF
+          produto={selecionado}
+          insumos={insumos}
+          onSalvar={salvarReceitaPDF}
+          onFechar={() => setPdfModalAberto(false)}
         />
       )}
     </div>
