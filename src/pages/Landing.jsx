@@ -72,17 +72,17 @@ function formatarTelefone(valor) {
   return `(${nums.slice(0,2)}) ${nums.slice(2,7)}-${nums.slice(7)}`
 }
 
-// ── Paleta ──
+// ── Paleta (slate azul elegante — mesma do app) ──
 const C = {
-  bg:      '#080604',
-  surface: '#100D0A',
-  border:  '#2A2218',
-  orange:  '#FF6A00',
-  amber:   '#FFAB00',
-  text:    '#F5EDE3',
-  muted:   '#6B6059',
-  green:   '#22C55E',
-  red:     '#EF4444',
+  bg:      '#0f172a',
+  surface: '#1e293b',
+  border:  '#334155',
+  orange:  '#f97316',
+  amber:   '#f59e0b',
+  text:    '#f1f5f9',
+  muted:   '#64748b',
+  green:   '#22c55e',
+  red:     '#ef4444',
 }
 
 // ── CSS global styles ──
@@ -92,8 +92,8 @@ const LP_STYLE = `
     50%      { transform: translateY(-10px); }
   }
   @keyframes lp-pulse-glow {
-    0%,100% { box-shadow: 0 0 30px 0px rgba(255,106,0,0.3); }
-    50%      { box-shadow: 0 0 60px 8px rgba(255,106,0,0.55); }
+    0%,100% { box-shadow: 0 0 30px 0px rgba(249,115,22,0.25); }
+    50%      { box-shadow: 0 0 60px 8px rgba(249,115,22,0.45); }
   }
   @keyframes lp-slide-up {
     from { opacity: 0; transform: translateY(32px); }
@@ -117,16 +117,16 @@ const LP_STYLE = `
   .lp-btn-primary {
     display: inline-flex; align-items: center; gap: 10px; cursor: pointer; border: none;
     background: ${C.orange}; color: white; font-family: 'Manrope', sans-serif;
-    font-size: 1rem; font-weight: 800; padding: 16px 32px; border-radius: 4px;
+    font-size: 1rem; font-weight: 800; padding: 16px 32px; border-radius: 8px;
     text-decoration: none; transition: all 0.2s; letter-spacing: 0.01em;
-    box-shadow: 0 4px 20px rgba(255,106,0,0.4);
+    box-shadow: 0 4px 20px rgba(249,115,22,0.35);
   }
-  .lp-btn-primary:hover { background: #ff8533; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,106,0,0.55); }
+  .lp-btn-primary:hover { background: #ea580c; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(249,115,22,0.5); }
   .lp-btn-outline {
     display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
     background: transparent; color: ${C.text}; font-family: 'Manrope', sans-serif;
-    font-size: 0.9rem; font-weight: 700; padding: 14px 28px; border-radius: 4px;
-    text-decoration: none; transition: all 0.2s; border: 1.5px solid rgba(245,237,227,0.25);
+    font-size: 0.9rem; font-weight: 700; padding: 14px 28px; border-radius: 8px;
+    text-decoration: none; transition: all 0.2s; border: 1.5px solid rgba(241,245,249,0.2);
   }
   .lp-btn-outline:hover { border-color: ${C.orange}; color: ${C.orange}; }
   .lp-label {
@@ -147,9 +147,9 @@ const LP_STYLE = `
   }
   .lp-faq-btn:hover { color: ${C.orange}; }
   .lp-tag {
-    display: inline-block; background: rgba(255,106,0,0.12); border: 1px solid rgba(255,106,0,0.3);
+    display: inline-block; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.3);
     color: ${C.orange}; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em;
-    text-transform: uppercase; padding: 4px 10px; border-radius: 3px;
+    text-transform: uppercase; padding: 4px 10px; border-radius: 20px;
   }
 `
 
@@ -328,7 +328,7 @@ export default function Landing() {
       {/* ── NAV ── */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(8,6,4,0.9)', backdropFilter: 'blur(12px)',
+        background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(12px)',
         borderBottom: `1px solid ${C.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: isMobile ? '0 20px' : '0 60px', height: '64px',
@@ -371,11 +371,11 @@ export default function Landing() {
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
           <div style={{
             position: 'absolute', top: '-20%', right: '-10%', width: '700px', height: '700px',
-            borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,106,0,0.08) 0%, transparent 70%)',
+            borderRadius: '50%', background: 'radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%)',
           }} />
           <div style={{
             position: 'absolute', bottom: '-10%', left: '-5%', width: '500px', height: '500px',
-            borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,171,0,0.05) 0%, transparent 70%)',
+            borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)',
           }} />
           {/* Grid lines */}
           <svg width="100%" height="100%" style={{ opacity: 0.04, position: 'absolute', inset: 0 }}>
@@ -392,7 +392,7 @@ export default function Landing() {
           {/* Copy */}
           <div>
             <div className="lp-tag" style={{ marginBottom: '24px' }}>
-              <span style={{ animation: 'lp-blink 1.2s step-end infinite', display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: C.orange, verticalAlign: 'middle', marginRight: '6px' }} />
+              <span style={{ animation: 'lp-blink 1.2s step-end infinite', display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', verticalAlign: 'middle', marginRight: '6px' }} />
               Beta gratuito disponível
             </div>
 
@@ -615,7 +615,7 @@ export default function Landing() {
                 value={nome}
                 onChange={e => setNome(e.target.value)}
                 style={{
-                  background: '#1A1510', border: `1px solid ${C.border}`, borderRadius: '8px',
+                  background: '#0f172a', border: `1px solid ${C.border}`, borderRadius: '8px',
                   padding: '16px 18px', color: C.text, fontSize: '1rem', fontFamily: 'Manrope, sans-serif',
                   outline: 'none', width: '100%',
                 }}
@@ -626,7 +626,7 @@ export default function Landing() {
                 value={telefone}
                 onChange={e => setTelefone(formatarTelefone(e.target.value))}
                 style={{
-                  background: '#1A1510', border: `1px solid ${C.border}`, borderRadius: '8px',
+                  background: '#0f172a', border: `1px solid ${C.border}`, borderRadius: '8px',
                   padding: '16px 18px', color: C.text, fontSize: '1rem', fontFamily: 'Manrope, sans-serif',
                   outline: 'none', width: '100%',
                 }}
@@ -666,31 +666,32 @@ export default function Landing() {
       {/* ── FOOTER CTA ── */}
       <section style={{
         padding: isMobile ? '72px 24px' : '100px 60px',
-        background: C.orange,
-        textAlign: 'center',
-        position: 'relative', overflow: 'hidden',
+        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+        textAlign: 'center', position: 'relative', overflow: 'hidden',
+        borderTop: '1px solid #334155',
       }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <h2 className="lp-bebas" style={{ fontSize: isMobile ? '12vw' : '5.5vw', color: 'white', marginBottom: '20px', position: 'relative' }}>
-          CHEGA DE PERDA.<br />COMECE AGORA.
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(ellipse at 50% 30%, rgba(249,115,22,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <h2 className="lp-bebas" style={{ fontSize: isMobile ? '12vw' : '5.5vw', color: '#f1f5f9', marginBottom: '20px', position: 'relative' }}>
+          CHEGA DE PERDA.<br /><span style={{ color: '#f97316' }}>COMECE AGORA.</span>
         </h2>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.05rem', marginBottom: '36px', position: 'relative' }}>
+        <p style={{ color: '#64748b', fontSize: '1.05rem', marginBottom: '36px', position: 'relative' }}>
           O ProduzFácil CMV é gratuito no beta. Não perca a vaga.
         </p>
         <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
           <a href={wppLink('footer')} target="_blank" rel="noopener noreferrer"
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'white',
-              color: C.orange, padding: '16px 32px', borderRadius: '4px', fontFamily: 'Manrope, sans-serif',
-              fontWeight: 900, fontSize: '1rem', textDecoration: 'none', transition: 'all 0.2s',
+              display: 'inline-flex', alignItems: 'center', gap: '10px', background: '#f97316',
+              color: 'white', padding: '16px 32px', borderRadius: '8px', fontFamily: 'Manrope, sans-serif',
+              fontWeight: 800, fontSize: '1rem', textDecoration: 'none', transition: 'all 0.2s',
+              boxShadow: '0 4px 20px rgba(249,115,22,0.35)',
             }}>
             Falar no WhatsApp
           </a>
           <button onClick={() => navigate('/login')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'transparent',
-              color: 'white', padding: '16px 32px', borderRadius: '4px', fontFamily: 'Manrope, sans-serif',
-              fontWeight: 700, fontSize: '1rem', cursor: 'pointer', border: '2px solid rgba(255,255,255,0.5)',
+              color: '#94a3b8', padding: '16px 32px', borderRadius: '8px', fontFamily: 'Manrope, sans-serif',
+              fontWeight: 700, fontSize: '1rem', cursor: 'pointer', border: '1.5px solid #334155',
               transition: 'all 0.2s',
             }}>
             Acessar sistema →
