@@ -319,8 +319,12 @@ export default function Landing() {
           <div style={{
             width: '32px', height: '32px', background: C.orange, borderRadius: '6px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1rem',
-          }}>🍳</div>
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+          </div>
           <span className="lp-bebas" style={{ fontSize: '1.4rem', color: C.text, letterSpacing: '0.08em' }}>
             ProduzFácil
           </span>
