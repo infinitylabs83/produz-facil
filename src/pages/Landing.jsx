@@ -80,7 +80,7 @@ const C = {
   orange:  '#f97316',
   amber:   '#f59e0b',
   text:    '#f1f5f9',
-  muted:   '#64748b',
+  muted:   '#94a3b8',
   green:   '#22c55e',
   red:     '#ef4444',
 }
@@ -153,90 +153,118 @@ const LP_STYLE = `
   }
 `
 
-// ── Dashboard mock — reflete o visual real do app (slate azul + cards brancos) ──
-function DashMock() {
-  const barData = [72, 85, 68, 91, 84, 78, 88]
-  const barMax = 100
+// ── iPhone mockup com tela real do app (produção mobile) ──
+function IphoneMock() {
   return (
-    <div style={{
-      borderRadius: '14px', overflow: 'hidden', fontFamily: 'Manrope, sans-serif',
-      boxShadow: '0 0 0 1px rgba(255,106,0,0.25), 0 20px 60px rgba(0,0,0,0.6)',
-      animation: 'lp-pulse-glow 3s ease-in-out infinite',
-    }}>
-      {/* Sidebar + content */}
-      <div style={{ display: 'flex', height: '340px' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', animation: 'lp-float 4s ease-in-out infinite' }}>
+      {/* Corpo do iPhone */}
+      <div style={{
+        width: '260px', background: '#1a1a1a', borderRadius: '44px',
+        padding: '14px', boxShadow: '0 0 0 1px #333, 0 0 0 3px #1a1a1a, 0 0 0 4px #444, 0 30px 80px rgba(0,0,0,0.7), 0 0 40px rgba(249,115,22,0.15)',
+        position: 'relative',
+      }}>
+        {/* Botões laterais (decorativos) */}
+        <div style={{ position: 'absolute', left: '-4px', top: '100px', width: '4px', height: '32px', background: '#333', borderRadius: '2px 0 0 2px' }} />
+        <div style={{ position: 'absolute', left: '-4px', top: '142px', width: '4px', height: '32px', background: '#333', borderRadius: '2px 0 0 2px' }} />
+        <div style={{ position: 'absolute', right: '-4px', top: '120px', width: '4px', height: '48px', background: '#333', borderRadius: '0 2px 2px 0' }} />
 
-        {/* Sidebar */}
-        <div style={{ width: '120px', background: '#1e293b', display: 'flex', flexDirection: 'column', padding: '16px 0', flexShrink: 0 }}>
-          <div style={{ padding: '0 12px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '10px' }}>
-            <div style={{ color: '#f97316', fontWeight: 800, fontSize: '0.75rem' }}>ProduzFácil</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.08em' }}>CMV</div>
-          </div>
-          {[
-            { icon: '📊', label: 'Dashboard', ativo: true },
-            { icon: '🍳', label: 'Produção', ativo: false },
-            { icon: '📅', label: 'Histórico', ativo: false },
-            { icon: '📋', label: 'Cadastros', ativo: false },
-          ].map((item, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
-              margin: '1px 6px', borderRadius: '6px', fontSize: '0.6rem', fontWeight: 600,
-              background: item.ativo ? '#f97316' : 'transparent',
-              color: item.ativo ? 'white' : 'rgba(255,255,255,0.5)',
-            }}>
-              <span style={{ fontSize: '0.75rem' }}>{item.icon}</span> {item.label}
+        {/* Tela */}
+        <div style={{
+          background: '#f8fafc', borderRadius: '32px', overflow: 'hidden',
+          fontFamily: 'Manrope, sans-serif', height: '520px', display: 'flex', flexDirection: 'column',
+        }}>
+          {/* Status bar */}
+          <div style={{ background: '#1e293b', padding: '10px 18px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+            <span style={{ color: 'white', fontSize: '0.6rem', fontWeight: 700 }}>9:41</span>
+            {/* Notch dinâmica */}
+            <div style={{ width: '70px', height: '18px', background: '#1a1a1a', borderRadius: '0 0 12px 12px', position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '14px' }} />
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="white"><rect x="0" y="4" width="2" height="6" rx="1"/><rect x="3" y="2" width="2" height="8" rx="1"/><rect x="6" y="0" width="2" height="10" rx="1"/><rect x="9" y="1" width="2" height="9" rx="1"/></svg>
+              <svg width="12" height="10" viewBox="0 0 24 12" fill="white"><rect x="0" y="2" width="20" height="8" rx="2"/><rect x="21" y="4" width="3" height="4" rx="1"/><rect x="1" y="3" width="14" height="6" rx="1" fill="#f97316"/></svg>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Main content */}
-        <div style={{ flex: 1, background: '#f8fafc', padding: '14px', overflowY: 'hidden' }}>
-          {/* Metric cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-            {[
-              { label: 'Custo/porção', value: 'R$ 4,38', delta: '↓12% vs mês anterior', up: false },
-              { label: 'Rendimento', value: '84,2%', delta: '↑ acima da meta (80%)', up: true },
-            ].map((m, i) => (
-              <div key={i} style={{
-                background: 'white', borderRadius: '10px', padding: '10px 12px',
-                border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-              }}>
-                <div style={{ color: '#64748b', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>{m.label}</div>
-                <div style={{ color: '#1e293b', fontSize: '1rem', fontWeight: 800 }}>{m.value}</div>
-                <div style={{ color: m.up ? '#22c55e' : '#ef4444', fontSize: '0.55rem', fontWeight: 700, marginTop: '3px' }}>{m.delta}</div>
+          {/* App top bar */}
+          <div style={{ background: '#1e293b', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '22px', height: '22px', background: '#f97316', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
               </div>
-            ))}
+              <span style={{ color: '#f97316', fontSize: '0.7rem', fontWeight: 800 }}>ProduzFácil</span>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.55rem', fontWeight: 600 }}>🚪 Sair</span>
           </div>
 
-          {/* Bar chart */}
-          <div style={{ background: 'white', borderRadius: '10px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
-            <div style={{ color: '#64748b', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
-              Rendimento por produção (%)
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', height: '70px' }}>
-              {barData.map((v, i) => (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+          {/* Conteúdo */}
+          <div style={{ flex: 1, overflowY: 'hidden', padding: '14px', background: '#f8fafc' }}>
+            {/* Steps */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '14px' }}>
+              {[1,2,3,4].map(n => (
+                <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <div style={{
-                    width: '100%', height: `${(v / barMax) * 70}px`,
-                    background: v >= 80 ? '#f97316' : '#e2e8f0',
-                    borderRadius: '3px 3px 0 0', transition: 'height 0.4s',
-                  }} />
+                    width: '22px', height: '22px', borderRadius: '50%', fontSize: '0.55rem', fontWeight: 800,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: n < 3 ? '#f97316' : n === 3 ? '#f97316' : '#e2e8f0',
+                    color: n <= 3 ? 'white' : '#94a3b8',
+                  }}>
+                    {n < 3 ? '✓' : n}
+                  </div>
+                  {n < 4 && <div style={{ width: '18px', height: '2px', background: n < 3 ? '#f97316' : '#e2e8f0', borderRadius: '1px' }} />}
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-              {['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d => (
-                <div key={d} style={{ color: '#94a3b8', fontSize: '0.45rem', flex: 1, textAlign: 'center' }}>{d}</div>
-              ))}
+
+            <div style={{ color: '#64748b', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Etapa 3 de 4 — Pesagens</div>
+            <div style={{ color: '#1e293b', fontSize: '0.85rem', fontWeight: 800, marginBottom: '14px' }}>🥩 Frango Grelhado</div>
+
+            {/* Inputs */}
+            {[
+              { label: 'Peso cru', value: '12,5 kg', done: true },
+              { label: 'Após limpeza', value: '10,2 kg', done: true },
+              { label: 'Peso final pronto', value: '8,8 kg', done: false, active: true },
+            ].map((f, i) => (
+              <div key={i} style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{f.label}</div>
+                <div style={{
+                  padding: '9px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700,
+                  background: f.active ? 'white' : f.done ? 'rgba(34,197,94,0.08)' : '#f1f5f9',
+                  border: f.active ? '2px solid #f97316' : f.done ? '1px solid rgba(34,197,94,0.3)' : '1px solid #e2e8f0',
+                  color: f.done ? '#166534' : '#1e293b', display: 'flex', justifyContent: 'space-between',
+                }}>
+                  {f.value}
+                  {f.done && <span style={{ color: '#22c55e', fontSize: '0.75rem' }}>✓</span>}
+                  {f.active && <span style={{ color: '#f97316', fontSize: '0.65rem', fontWeight: 600 }}>kg</span>}
+                </div>
+              </div>
+            ))}
+
+            {/* Alert card */}
+            <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '8px', padding: '8px 10px', display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
+              <span style={{ fontSize: '0.9rem' }}>✅</span>
+              <div>
+                <div style={{ color: '#166534', fontSize: '0.6rem', fontWeight: 800 }}>Rendimento: 84,2%</div>
+                <div style={{ color: '#15803d', fontSize: '0.55rem' }}>Dentro da meta (≥ 80%)</div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Bottom bar */}
-      <div style={{ background: '#1e293b', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.55rem' }}>7 produções essa semana</span>
-        <span style={{ background: '#f97316', color: 'white', fontSize: '0.5rem', fontWeight: 800, padding: '2px 8px', borderRadius: '3px', letterSpacing: '0.08em' }}>EXCELENTE</span>
+          {/* Bottom nav */}
+          <div style={{ background: 'white', borderTop: '1px solid #e2e8f0', display: 'flex', flexShrink: 0 }}>
+            {[{i:'📊',l:'Dashboard'},{i:'🍖',l:'Produção'},{i:'📅',l:'Histórico'},{i:'📋',l:'Cadastros'}].map((item, idx) => (
+              <div key={idx} style={{
+                flex: 1, padding: '8px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+                borderTop: idx === 1 ? '2px solid #f97316' : '2px solid transparent',
+                color: idx === 1 ? '#f97316' : '#94a3b8',
+              }}>
+                <span style={{ fontSize: '0.9rem' }}>{item.i}</span>
+                <span style={{ fontSize: '0.45rem', fontWeight: 700 }}>{item.l}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Home bar */}
+        <div style={{ height: '6px', width: '80px', background: '#444', borderRadius: '3px', margin: '10px auto 0' }} />
       </div>
     </div>
   )
@@ -349,11 +377,6 @@ export default function Landing() {
           <span style={{ color: C.muted, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginLeft: '2px' }}>CMV</span>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {!isMobile && (
-            <a href={wppLink('nav')} target="_blank" rel="noopener noreferrer" className="lp-btn-outline" style={{ padding: '10px 20px', fontSize: '0.82rem' }}>
-              Falar no WhatsApp
-            </a>
-          )}
           <button onClick={() => navigate('/login')} className="lp-btn-primary" style={{ padding: '10px 22px', fontSize: '0.82rem' }}>
             Acessar sistema
           </button>
@@ -426,7 +449,7 @@ export default function Landing() {
                 {['#FF6A00','#FFAB00','#22C55E','#3B82F6'].map((c, i) => (
                   <div key={i} style={{
                     width: '28px', height: '28px', borderRadius: '50%', background: c,
-                    border: '2px solid #080604', marginLeft: i > 0 ? '-8px' : 0,
+                    border: '2px solid #0f172a', marginLeft: i > 0 ? '-8px' : 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '0.65rem', fontWeight: 800, color: 'white',
                   }}>
@@ -440,10 +463,8 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Dashboard mock */}
-          <div style={{ animation: 'lp-float 4s ease-in-out infinite' }}>
-            <DashMock />
-          </div>
+          {/* iPhone mockup */}
+          <IphoneMock />
         </div>
       </section>
 
@@ -561,30 +582,127 @@ export default function Landing() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '12px' : '20px' }}>
             {/* ProduzFácil */}
             <div className="lp-card" style={{ overflow: 'hidden' }}>
-              <div style={{ background: 'rgba(255,106,0,0.12)', borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>🍳</div>
-                <span style={{ fontWeight: 800, fontSize: '0.88rem', color: C.orange }}>ProduzFácil CMV</span>
+              <div style={{ background: 'rgba(249,115,22,0.12)', borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: C.orange, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                </div>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: C.orange }}>ProduzFácil CMV</span>
               </div>
               {['Cálculo automático de perdas','Custo real por porção','Comparação entre fornecedores','Dashboard em tempo real','Acesso para funcionários','Histórico ilimitado','Sem planilha','Mobile-friendly'].map((t, i) => (
-                <div key={i} style={{ padding: '10px 20px', display: 'flex', gap: '10px', alignItems: 'center', borderBottom: i < 7 ? `1px solid ${C.border}` : 'none' }}>
-                  <span style={{ color: C.green, flexShrink: 0 }}>✓</span>
-                  <span style={{ color: C.text, fontSize: '0.82rem', fontWeight: 500 }}>{t}</span>
+                <div key={i} style={{ padding: '12px 20px', display: 'flex', gap: '12px', alignItems: 'center', borderBottom: i < 7 ? `1px solid ${C.border}` : 'none' }}>
+                  <span style={{ color: C.green, flexShrink: 0, fontWeight: 800 }}>✓</span>
+                  <span style={{ color: C.text, fontSize: '0.95rem', fontWeight: 600 }}>{t}</span>
                 </div>
               ))}
             </div>
 
             {/* Planilha */}
             <div className="lp-card">
-              <div style={{ background: 'rgba(107,96,89,0.15)', borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#2A2218', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>📊</div>
-                <span style={{ fontWeight: 800, fontSize: '0.88rem', color: C.muted }}>Planilha manual</span>
+              <div style={{ background: 'rgba(255,255,255,0.04)', borderBottom: `1px solid ${C.border}`, padding: '16px 20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </div>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#94a3b8' }}>Planilha manual</span>
               </div>
               {['Precisa configurar fórmulas','Cálculo incompleto','Sem comparação automática','Atualização manual demorada','Não tem perfil de funcionário','Arquivo bagunçado com o tempo','Depende de treinamento','Péssimo no celular'].map((t, i) => (
-                <div key={i} style={{ padding: '10px 20px', display: 'flex', gap: '10px', alignItems: 'center', borderBottom: i < 7 ? `1px solid ${C.border}` : 'none' }}>
-                  <span style={{ color: C.red, flexShrink: 0 }}>✗</span>
-                  <span style={{ color: C.muted, fontSize: '0.82rem' }}>{t}</span>
+                <div key={i} style={{ padding: '12px 20px', display: 'flex', gap: '12px', alignItems: 'center', borderBottom: i < 7 ? `1px solid ${C.border}` : 'none' }}>
+                  <span style={{ color: C.red, flexShrink: 0, fontWeight: 800 }}>✗</span>
+                  <span style={{ color: '#94a3b8', fontSize: '0.95rem' }}>{t}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PLANOS ── */}
+      <section style={{ padding: isMobile ? '72px 24px' : '100px 60px', background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <div className="lp-label">Planos</div>
+            <h2 className="lp-bebas" style={{ fontSize: isMobile ? '10vw' : '4.2vw', color: C.text, marginBottom: '14px' }}>
+              EM BREVE: LANÇAMENTO OFICIAL
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '1.05rem', maxWidth: '560px', margin: '0 auto 48px' }}>
+              O produto está em beta gratuito. Aproveite agora para garantir o acesso de <strong style={{ color: C.text }}>Membro Fundador</strong> — preço especial bloqueado para sempre.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '20px' }}>
+            {/* Gratuito */}
+            <div className="lp-card" style={{ padding: '28px' }}>
+              <div style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px' }}>Atual — Beta</div>
+              <div className="lp-bebas" style={{ fontSize: '2.8rem', color: C.text, lineHeight: 1, marginBottom: '4px' }}>Grátis</div>
+              <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '24px' }}>enquanto durar o beta</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                {['1 empresa','Produções ilimitadas','Dashboard básico','Acesso para funcionários'].map((f, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span style={{ color: C.green, fontSize: '0.85rem' }}>✓</span>
+                    <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href={wppLink('plano-beta')} target="_blank" rel="noopener noreferrer" style={{
+                display: 'block', textAlign: 'center', padding: '13px', borderRadius: '8px',
+                border: `1.5px solid ${C.border}`, color: '#94a3b8', fontWeight: 700,
+                fontSize: '0.9rem', textDecoration: 'none', transition: 'all 0.2s',
+              }}>
+                Acessar agora (grátis)
+              </a>
+            </div>
+
+            {/* Fundador — destaque */}
+            <div style={{
+              background: 'linear-gradient(145deg, #1e3a5f 0%, #1e293b 100%)',
+              border: `2px solid ${C.orange}`, borderRadius: '12px', padding: '28px',
+              position: 'relative', overflow: 'hidden',
+              boxShadow: '0 0 40px rgba(249,115,22,0.2)',
+            }}>
+              <div style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: C.orange, color: 'white', fontSize: '0.6rem', fontWeight: 900,
+                padding: '3px 10px', borderRadius: '20px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              }}>
+                🔥 Aproveite já
+              </div>
+              <div style={{ color: C.orange, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px' }}>Membro Fundador</div>
+              <div className="lp-bebas" style={{ fontSize: '2.8rem', color: C.text, lineHeight: 1 }}>R$ 79</div>
+              <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '6px' }}>/mês — preço bloqueado</div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '24px', fontStyle: 'italic' }}>
+                ⚡ Após o lançamento, sobe para R$ 149/mês
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                {['Tudo do plano gratuito','Relatórios avançados de CMV','Comparação entre fornecedores','Alertas de desvio de meta','Suporte prioritário por WhatsApp','Badge exclusivo de Fundador','Preço nunca aumenta'].map((f, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span style={{ color: C.orange, fontSize: '0.85rem' }}>✓</span>
+                    <span style={{ color: C.text, fontSize: '0.9rem', fontWeight: 500 }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href={wppLink('plano-fundador')} target="_blank" rel="noopener noreferrer" className="lp-btn-primary" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+                Quero ser Fundador →
+              </a>
+            </div>
+
+            {/* Pro — em breve */}
+            <div className="lp-card" style={{ padding: '28px', opacity: 0.6 }}>
+              <div style={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '12px' }}>Em breve</div>
+              <div className="lp-bebas" style={{ fontSize: '2.8rem', color: C.text, lineHeight: 1, marginBottom: '4px' }}>Pro</div>
+              <div style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '24px' }}>para redes e franquias</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                {['Múltiplas unidades','BI e análises avançadas','API e integrações','Gestor multiempresa','SLA garantido'].map((f, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span style={{ color: '#475569', fontSize: '0.85rem' }}>○</span>
+                    <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                display: 'block', textAlign: 'center', padding: '13px', borderRadius: '8px',
+                border: `1.5px solid ${C.border}`, color: '#475569', fontWeight: 700, fontSize: '0.9rem',
+              }}>
+                Em breve
+              </div>
             </div>
           </div>
         </div>
@@ -698,6 +816,23 @@ export default function Landing() {
           </button>
         </div>
       </section>
+
+      {/* ── BOTÃO FLUTUANTE WHATSAPP ── */}
+      <a href={wppLink('floating')} target="_blank" rel="noopener noreferrer" style={{
+        position: 'fixed', bottom: '28px', right: '28px', zIndex: 999,
+        width: '56px', height: '56px', borderRadius: '50%', background: '#25D366',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 4px 20px rgba(37,211,102,0.5)', textDecoration: 'none',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+      }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(37,211,102,0.65)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(37,211,102,0.5)' }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.535 5.86L.057 23.427a.75.75 0 0 0 .921.921l5.565-1.479A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.96 0-3.793-.538-5.362-1.473l-.384-.228-3.984 1.058 1.058-3.984-.228-.384A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+        </svg>
+      </a>
 
       {/* ── FOOTER ── */}
       <footer style={{ padding: isMobile ? '32px 24px' : '40px 60px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
