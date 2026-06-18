@@ -153,72 +153,90 @@ const LP_STYLE = `
   }
 `
 
-// ── Dashboard mock ──
+// ── Dashboard mock — reflete o visual real do app (slate azul + cards brancos) ──
 function DashMock() {
+  const barData = [72, 85, 68, 91, 84, 78, 88]
+  const barMax = 100
   return (
     <div style={{
-      background: '#12100D',
-      border: '1px solid #2E2519',
-      borderRadius: '16px',
-      overflow: 'hidden',
-      fontFamily: 'Manrope, sans-serif',
+      borderRadius: '14px', overflow: 'hidden', fontFamily: 'Manrope, sans-serif',
+      boxShadow: '0 0 0 1px rgba(255,106,0,0.25), 0 20px 60px rgba(0,0,0,0.6)',
       animation: 'lp-pulse-glow 3s ease-in-out infinite',
     }}>
-      {/* Header bar */}
-      <div style={{ background: '#1A1610', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #2E2519' }}>
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444' }} />
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FFAB00' }} />
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#22C55E' }} />
-        <span style={{ color: '#6B6059', fontSize: '0.7rem', marginLeft: '8px', fontWeight: 600 }}>ProduzFácil CMV — Dashboard</span>
-      </div>
+      {/* Sidebar + content */}
+      <div style={{ display: 'flex', height: '340px' }}>
 
-      {/* Metrics row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: '#2E2519' }}>
-        {[
-          { label: 'Custo/porção', value: 'R$ 4,38', delta: '-12%', up: false },
-          { label: 'Rendimento', value: '84,2%', delta: '+3,1%', up: true },
-          { label: 'Produções', value: '32', delta: 'esta semana', up: true },
-        ].map((m, i) => (
-          <div key={i} style={{ background: '#12100D', padding: '16px 14px' }}>
-            <div style={{ color: '#6B6059', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
-            <div style={{ color: '#F5EDE3', fontSize: '1.05rem', fontWeight: 800, marginBottom: '4px' }}>{m.value}</div>
-            <div style={{ color: m.up ? '#22C55E' : '#EF4444', fontSize: '0.65rem', fontWeight: 700 }}>{m.delta}</div>
+        {/* Sidebar */}
+        <div style={{ width: '120px', background: '#1e293b', display: 'flex', flexDirection: 'column', padding: '16px 0', flexShrink: 0 }}>
+          <div style={{ padding: '0 12px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '10px' }}>
+            <div style={{ color: '#f97316', fontWeight: 800, fontSize: '0.75rem' }}>ProduzFácil</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.08em' }}>CMV</div>
           </div>
-        ))}
-      </div>
-
-      {/* Chart area */}
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid #2E2519' }}>
-        <div style={{ color: '#6B6059', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>Rendimento por produção</div>
-        <svg width="100%" height="56" viewBox="0 0 300 56" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FF6A00" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#FF6A00" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d="M0,44 C30,44 40,22 60,28 C80,34 100,12 120,18 C140,24 160,30 180,20 C200,10 220,16 240,12 C260,8 280,4 300,8 L300,56 L0,56 Z" fill="url(#lg1)" />
-          <path d="M0,44 C30,44 40,22 60,28 C80,34 100,12 120,18 C140,24 160,30 180,20 C200,10 220,16 240,12 C260,8 280,4 300,8" fill="none" stroke="#FF6A00" strokeWidth="2" />
-        </svg>
-      </div>
-
-      {/* Production list */}
-      <div style={{ padding: '12px 20px 16px' }}>
-        {[
-          { nome: 'Frango grelhado', kg: '12kg', status: 'Excelente', cor: '#22C55E' },
-          { nome: 'Caldo de legumes', kg: '8kg', status: 'Na meta', cor: '#FFAB00' },
-          { nome: 'Filé bovino', kg: '6kg', status: 'Atenção', cor: '#EF4444' },
-        ].map((p, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < 2 ? '1px solid #1E1B15' : 'none' }}>
-            <div>
-              <div style={{ color: '#F5EDE3', fontSize: '0.75rem', fontWeight: 700 }}>{p.nome}</div>
-              <div style={{ color: '#6B6059', fontSize: '0.65rem' }}>{p.kg} processados</div>
+          {[
+            { icon: '📊', label: 'Dashboard', ativo: true },
+            { icon: '🍳', label: 'Produção', ativo: false },
+            { icon: '📅', label: 'Histórico', ativo: false },
+            { icon: '📋', label: 'Cadastros', ativo: false },
+          ].map((item, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
+              margin: '1px 6px', borderRadius: '6px', fontSize: '0.6rem', fontWeight: 600,
+              background: item.ativo ? '#f97316' : 'transparent',
+              color: item.ativo ? 'white' : 'rgba(255,255,255,0.5)',
+            }}>
+              <span style={{ fontSize: '0.75rem' }}>{item.icon}</span> {item.label}
             </div>
-            <span style={{ background: p.cor + '22', border: `1px solid ${p.cor}55`, color: p.cor, fontSize: '0.6rem', fontWeight: 800, padding: '3px 8px', borderRadius: '3px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {p.status}
-            </span>
+          ))}
+        </div>
+
+        {/* Main content */}
+        <div style={{ flex: 1, background: '#f8fafc', padding: '14px', overflowY: 'hidden' }}>
+          {/* Metric cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+            {[
+              { label: 'Custo/porção', value: 'R$ 4,38', delta: '↓12% vs mês anterior', up: false },
+              { label: 'Rendimento', value: '84,2%', delta: '↑ acima da meta (80%)', up: true },
+            ].map((m, i) => (
+              <div key={i} style={{
+                background: 'white', borderRadius: '10px', padding: '10px 12px',
+                border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              }}>
+                <div style={{ color: '#64748b', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>{m.label}</div>
+                <div style={{ color: '#1e293b', fontSize: '1rem', fontWeight: 800 }}>{m.value}</div>
+                <div style={{ color: m.up ? '#22c55e' : '#ef4444', fontSize: '0.55rem', fontWeight: 700, marginTop: '3px' }}>{m.delta}</div>
+              </div>
+            ))}
           </div>
-        ))}
+
+          {/* Bar chart */}
+          <div style={{ background: 'white', borderRadius: '10px', padding: '10px 12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ color: '#64748b', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+              Rendimento por produção (%)
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '5px', height: '70px' }}>
+              {barData.map((v, i) => (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                  <div style={{
+                    width: '100%', height: `${(v / barMax) * 70}px`,
+                    background: v >= 80 ? '#f97316' : '#e2e8f0',
+                    borderRadius: '3px 3px 0 0', transition: 'height 0.4s',
+                  }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+              {['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d => (
+                <div key={d} style={{ color: '#94a3b8', fontSize: '0.45rem', flex: 1, textAlign: 'center' }}>{d}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div style={{ background: '#1e293b', padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.55rem' }}>7 produções essa semana</span>
+        <span style={{ background: '#f97316', color: 'white', fontSize: '0.5rem', fontWeight: 800, padding: '2px 8px', borderRadius: '3px', letterSpacing: '0.08em' }}>EXCELENTE</span>
       </div>
     </div>
   )
