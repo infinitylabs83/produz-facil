@@ -101,6 +101,10 @@ export default function Historico() {
   const countStatus = { excelente: 0, meta: 0, atencao: 0, perda: 0 }
   filtradas.forEach(p => { if (p.status) countStatus[p.status] = (countStatus[p.status] || 0) + 1 })
 
+  const nomeProdutoSelecionado = filtroProduto
+    ? (produtos.find(p => p.id === filtroProduto)?.nome || '')
+    : ''
+
   return (
     <div>
       <div className="pagina-cabecalho">
@@ -116,6 +120,39 @@ export default function Historico() {
           🗑️ Apagar tudo
         </button>
       </div>
+
+      {/* ── Tabs por produto ── */}
+      {produtos.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <button
+            onClick={() => setFiltroProduto('')}
+            style={{
+              padding: '8px 16px', borderRadius: '20px', border: '2px solid',
+              borderColor: !filtroProduto ? 'var(--cor-primaria)' : 'var(--cor-borda)',
+              background: !filtroProduto ? 'var(--cor-primaria)' : 'transparent',
+              color: !filtroProduto ? '#fff' : 'var(--cor-texto-suave)',
+              cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.15s',
+            }}
+          >
+            Todos
+          </button>
+          {produtos.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setFiltroProduto(p.id)}
+              style={{
+                padding: '8px 16px', borderRadius: '20px', border: '2px solid',
+                borderColor: filtroProduto === p.id ? 'var(--cor-primaria)' : 'var(--cor-borda)',
+                background: filtroProduto === p.id ? 'var(--cor-primaria)' : 'transparent',
+                color: filtroProduto === p.id ? '#fff' : 'var(--cor-texto-suave)',
+                cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.15s',
+              }}
+            >
+              {p.nome}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── KPIs rápidos ── */}
       {filtradas.length > 0 && (
@@ -140,9 +177,11 @@ export default function Historico() {
       {dadosGrafico.length >= 2 && (
         <div className="card" style={{ marginBottom: '20px' }}>
           <div style={{ marginBottom: '12px' }}>
-            <div className="card-titulo">Evolução: Custo/porção e Rendimento</div>
+            <div className="card-titulo">
+              Evolução: Custo/porção e Rendimento{nomeProdutoSelecionado ? ` — ${nomeProdutoSelecionado}` : ''}
+            </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--cor-texto-suave)' }}>
-              {filtradas.length > 30 ? 'últimas 30 produções filtradas' : 'todas as produções filtradas'} — em ordem cronológica
+              {filtradas.length > 30 ? 'últimas 30 produções' : `${filtradas.length} produções`} — em ordem cronológica
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
@@ -157,7 +196,7 @@ export default function Historico() {
                   <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--cor-borda)" />
+              <CartesianGrid stroke="var(--cor-borda)" strokeOpacity={0.4} vertical={false} />
               <XAxis dataKey="data" tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} />
               <YAxis yAxisId="custo" tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} />
               <YAxis yAxisId="rend" orientation="right" tick={{ fontSize: 10, fill: '#22c55e' }} domain={[0, 100]} tickFormatter={v => `${v}%`} />
@@ -176,13 +215,6 @@ export default function Historico() {
       {/* Filtros */}
       <div className="card" style={{ marginBottom: '20px', padding: '16px' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div className="campo-grupo" style={{ marginBottom: 0, flex: '1', minWidth: '160px' }}>
-            <label>Produto</label>
-            <select value={filtroProduto} onChange={e => setFiltroProduto(e.target.value)}>
-              <option value="">Todos os produtos</option>
-              {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
-          </div>
           <div className="campo-grupo" style={{ marginBottom: 0, flex: '1', minWidth: '140px' }}>
             <label>Status</label>
             <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>

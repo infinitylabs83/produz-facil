@@ -465,6 +465,14 @@ tr:hover td {
   color: var(--cor-texto-suave);
 }
 
+/* ===== GRIDS DESKTOP ===== */
+.cadastros-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
 /* ===== RESPONSIVO — MOBILE ===== */
 @media (max-width: 768px) {
   /* O layout mobile agora é gerenciado pelo Layout.jsx (top bar + bottom tabs) */
