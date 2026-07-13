@@ -85,6 +85,7 @@ function ProdutosComFicha() {
   const [insumos, setInsumos]   = useState([])
   const [selecionado, setSelecionado] = useState(null) // produto ativo
   const [modo, setModo] = useState('ver')              // 'ver' | 'novo' | 'editar'
+  const [busca, setBusca] = useState('')
 
   // campos do formulário de produto
   const [fNome, setFNome]         = useState('')
@@ -308,21 +309,54 @@ function ProdutosComFicha() {
 
   const insumosDisponiveis = insumos.filter(i => !ficha.some(f => f.insumo_id === i.id))
 
-  // agrupa produtos por categoria para a lista
-  const porCategoria = produtos.reduce((acc, p) => {
-    const cat = p.categoria || 'Outros'
+  // filtra por busca e agrupa por categoria (itens FAB vão para "Fabricação")
+  const ORDEM_CAT = ['Fabricação', 'Carnes', 'Aves', 'Peixes', 'Molhos', 'Guarnições', 'Sobremesas', 'Massas', 'Adicional', 'Outros']
+
+  const produtosFiltrados = produtos.filter(p =>
+    p.nome.toLowerCase().includes(busca.toLowerCase())
+  )
+
+  const porCategoria = produtosFiltrados.reduce((acc, p) => {
+    const cat = p.nome.toUpperCase().includes('FAB') ? 'Fabricação' : (p.categoria || 'Outros')
     if (!acc[cat]) acc[cat] = []
     acc[cat].push(p); return acc
   }, {})
+
+  const porCategoriaOrdenado = Object.fromEntries(
+    ORDEM_CAT.filter(c => porCategoria[c]).map(c => [c, porCategoria[c]])
+      .concat(Object.entries(porCategoria).filter(([c]) => !ORDEM_CAT.includes(c)))
+  )
 
   return (
     <div className="cadastros-grid">
 
       {/* PAINEL ESQUERDO — lista de produtos */}
       <div>
-        <button className="btn btn-primario" onClick={iniciarNovo} style={{ width: '100%', marginBottom: '12px' }}>
+        <button className="btn btn-primario" onClick={iniciarNovo} style={{ width: '100%', marginBottom: '10px' }}>
           ＋ Novo Produto
         </button>
+
+        {/* Campo de busca */}
+        <div style={{ position: 'relative', marginBottom: '14px' }}>
+          <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cor-texto-suave)', fontSize: '0.95rem', pointerEvents: 'none' }}>🔍</span>
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar produto..."
+            style={{ width: '100%', padding: '9px 12px 9px 34px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.88rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', boxSizing: 'border-box', outline: 'none' }}
+            onFocus={e => e.target.style.borderColor = 'var(--cor-primaria)'}
+            onBlur={e => e.target.style.borderColor = 'var(--cor-borda)'}
+          />
+          {busca && (
+            <button onClick={() => setBusca('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cor-texto-suave)', fontSize: '1rem', lineHeight: 1, padding: '2px' }}>✕</button>
+          )}
+        </div>
+
+        {busca && (
+          <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)', marginBottom: '8px' }}>
+            {produtosFiltrados.length} resultado(s) para "{busca}"
+          </div>
+        )}
 
         {produtos.length === 0 && (
           <div className="card" style={{ textAlign: 'center', color: 'var(--cor-texto-suave)', padding: '24px', fontSize: '0.9rem' }}>
@@ -330,10 +364,20 @@ function ProdutosComFicha() {
           </div>
         )}
 
-        {Object.entries(porCategoria).map(([cat, lista]) => (
+        {produtosFiltrados.length === 0 && busca && (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--cor-texto-suave)', fontSize: '0.85rem' }}>
+            Nenhum produto encontrado.
+          </div>
+        )}
+
+        {Object.entries(porCategoriaOrdenado).map(([cat, lista]) => (
           <div key={cat} style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '6px', paddingLeft: '4px' }}>
-              {cat}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', paddingLeft: '2px' }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: cat === 'Fabricação' ? '#f97316' : 'var(--cor-texto-suave)' }}>
+                {cat === 'Fabricação' ? '🏭 ' : ''}{cat}
+              </div>
+              <div style={{ flex: 1, height: '1px', background: cat === 'Fabricação' ? 'rgba(249,115,22,0.3)' : 'var(--cor-borda)' }} />
+              <div style={{ fontSize: '0.65rem', color: 'var(--cor-texto-suave)' }}>{lista.length}</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {lista.map(p => (
