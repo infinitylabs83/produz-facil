@@ -86,6 +86,7 @@ function ProdutosComFicha() {
   const [selecionado, setSelecionado] = useState(null) // produto ativo
   const [modo, setModo] = useState('ver')              // 'ver' | 'novo' | 'editar'
   const [busca, setBusca] = useState('')
+  const [filtroCat, setFiltroCat] = useState('Todas')
 
   // campos do formulário de produto
   const [fNome, setFNome]         = useState('')
@@ -312,9 +313,12 @@ function ProdutosComFicha() {
   // filtra por busca e agrupa por categoria (itens FAB vão para "Fabricação")
   const ORDEM_CAT = ['Fabricação', 'Carnes', 'Aves', 'Peixes', 'Molhos', 'Guarnições', 'Sobremesas', 'Massas', 'Adicional', 'Outros']
 
-  const produtosFiltrados = produtos.filter(p =>
-    p.nome.toLowerCase().includes(busca.toLowerCase())
-  )
+  const produtosFiltrados = produtos.filter(p => {
+    const cat = p.nome.toUpperCase().includes('FAB') ? 'Fabricação' : (p.categoria || 'Outros')
+    const bOk = p.nome.toLowerCase().includes(busca.toLowerCase())
+    const cOk = filtroCat === 'Todas' || cat === filtroCat
+    return bOk && cOk
+  })
 
   const porCategoria = produtosFiltrados.reduce((acc, p) => {
     const cat = p.nome.toUpperCase().includes('FAB') ? 'Fabricação' : (p.categoria || 'Outros')
@@ -336,25 +340,34 @@ function ProdutosComFicha() {
           ＋ Novo Produto
         </button>
 
-        {/* Campo de busca */}
-        <div style={{ position: 'relative', marginBottom: '14px' }}>
-          <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cor-texto-suave)', fontSize: '0.95rem', pointerEvents: 'none' }}>🔍</span>
-          <input
-            value={busca}
-            onChange={e => setBusca(e.target.value)}
-            placeholder="Buscar produto..."
-            style={{ width: '100%', padding: '9px 12px 9px 34px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.88rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', boxSizing: 'border-box', outline: 'none' }}
-            onFocus={e => e.target.style.borderColor = 'var(--cor-primaria)'}
-            onBlur={e => e.target.style.borderColor = 'var(--cor-borda)'}
-          />
-          {busca && (
-            <button onClick={() => setBusca('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cor-texto-suave)', fontSize: '1rem', lineHeight: 1, padding: '2px' }}>✕</button>
-          )}
+        {/* Campo de busca + filtro de categoria */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cor-texto-suave)', fontSize: '0.95rem', pointerEvents: 'none' }}>🔍</span>
+            <input
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar produto..."
+              style={{ width: '100%', padding: '9px 12px 9px 34px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.88rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', boxSizing: 'border-box', outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = 'var(--cor-primaria)'}
+              onBlur={e => e.target.style.borderColor = 'var(--cor-borda)'}
+            />
+            {busca && (
+              <button onClick={() => setBusca('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cor-texto-suave)', fontSize: '1rem', lineHeight: 1, padding: '2px' }}>✕</button>
+            )}
+          </div>
+          <select
+            value={filtroCat}
+            onChange={e => setFiltroCat(e.target.value)}
+            style={{ padding: '9px 8px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.82rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', cursor: 'pointer', flexShrink: 0 }}
+          >
+            {['Todas', ...ORDEM_CAT].map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
 
-        {busca && (
+        {(busca || filtroCat !== 'Todas') && (
           <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)', marginBottom: '8px' }}>
-            {produtosFiltrados.length} resultado(s) para "{busca}"
+            {produtosFiltrados.length} resultado(s){busca ? ` para "${busca}"` : ''}
           </div>
         )}
 
