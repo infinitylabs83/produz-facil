@@ -530,34 +530,21 @@ export default function KitchenGateway() {
   const verificarSessao = useCallback(async () => {
     if (!token) { setFase('invalido'); return }
 
-    // Verifica sessão salva
+    // Verifica sessão local salva (já passou pelo PIN antes)
     const salvo = localStorage.getItem(STORAGE_KEY)
     if (salvo) {
       try {
         const dados = JSON.parse(salvo)
-        if (dados.token === token) {
-          // Verifica se o token ainda é válido
-          const { data, error } = await supabase.rpc('validar_acesso_cozinha', {
-            p_token: dados.token, p_pin: dados.pin_salvo || ''
-          })
-          if (!error && data) {
-            setSessao({ ...dados, funcionarios: data.funcionarios || dados.funcionarios })
-            setFase('funcionario')
-            return
-          }
+        if (dados.token === token && dados.empresa_id) {
+          setSessao(dados)
+          setFase('funcionario')
+          return
         }
       } catch {}
       localStorage.removeItem(STORAGE_KEY)
     }
 
-    // Verifica se token existe (sem PIN)
-    const { data, error } = await supabase
-      .from('empresas')
-      .select('id')
-      .eq('token_cozinha', token)
-      .single()
-
-    if (error || !data) { setFase('invalido'); return }
+    // Token presente na URL → vai para PIN (validação acontece ao digitar o PIN)
     setFase('pin')
   }, [token])
 
