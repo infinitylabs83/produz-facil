@@ -238,19 +238,21 @@ export default function Configuracoes() {
     await supabase.from('empresas').update({ funcionarios }).eq('id', empresaId)
   }
 
-  function adicionarFuncionario() {
+  async function adicionarFuncionario() {
     const nome = novoFunc.trim()
-    if (!nome || funcionarios.includes(nome)) return
+    if (!nome || funcionarios.includes(nome) || !empresaId) return
     const novo = [...funcionarios, nome]
     setFuncionarios(novo)
     setNovoFunc('')
-    supabase.from('empresas').update({ funcionarios: novo }).eq('id', empresaId)
+    const { error } = await supabase.from('empresas').update({ funcionarios: novo }).eq('id', empresaId)
+    if (error) mostrarMsg('⚠️ Erro ao salvar funcionário: ' + error.message)
   }
 
-  function removerFuncionario(nome) {
+  async function removerFuncionario(nome) {
     const novo = funcionarios.filter(f => f !== nome)
     setFuncionarios(novo)
-    supabase.from('empresas').update({ funcionarios: novo }).eq('id', empresaId)
+    const { error } = await supabase.from('empresas').update({ funcionarios: novo }).eq('id', empresaId)
+    if (error) mostrarMsg('⚠️ Erro ao remover funcionário: ' + error.message)
   }
 
   return (
