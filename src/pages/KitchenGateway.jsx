@@ -171,6 +171,111 @@ function TelaFuncionario({ sessao, onSelecionar }) {
   )
 }
 
+// ── Seletor de produto (etapa 0) ─────────────────────────────────────────────
+function EtapaProduto({ produtos, fornecedores, produtoId, fornecedorId, setFornecedorId, onSelecionar, onAvancar }) {
+  const [busca, setBusca] = useState('')
+
+  const fab  = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
+  const outros = produtos.filter(p => !p.nome.toUpperCase().includes('FAB'))
+
+  const resultadoBusca = busca.trim().length >= 1
+    ? produtos.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()))
+    : []
+
+  const produtoSel = produtos.find(p => p.id === produtoId)
+
+  return (
+    <div style={{ ...S.card, padding: '24px' }}>
+      <div style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '6px' }}>🏭 O que você está produzindo?</div>
+      <div style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: '20px' }}>Toque no item ou pesquise pelo nome</div>
+
+      {/* Itens FAB — botões grandes de toque */}
+      {fab.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#f97316', marginBottom: '10px' }}>
+            🏭 Fabricação própria
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {fab.map(p => (
+              <button key={p.id} onClick={() => onSelecionar(p.id)} style={{
+                padding: '16px 18px', border: `2px solid ${produtoId === p.id ? '#f97316' : '#334155'}`,
+                borderRadius: '12px', background: produtoId === p.id ? 'rgba(249,115,22,0.12)' : '#0f172a',
+                color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
+                fontFamily: 'inherit', textAlign: 'left', transition: 'all 0.15s',
+                boxShadow: produtoId === p.id ? '0 0 0 1px #f97316' : 'none',
+              }}>
+                <div>{p.nome.replace(/ ?- ?FAB/i, '')}</div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px', fontWeight: 400 }}>
+                  Meta: {p.meta_rendimento}% · Porção: {p.porcao_padrao_g}g
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Campo de pesquisa para outros itens */}
+      <div style={{ borderTop: '1px solid #1e293b', paddingTop: '16px', marginBottom: '16px' }}>
+        <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#475569', marginBottom: '10px' }}>
+          🔍 Buscar outro item
+        </div>
+        <div style={{ position: 'relative' }}>
+          <input
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Digite o nome do produto..."
+            style={{ ...S.input, paddingLeft: '14px', fontSize: '1rem' }}
+            onFocus={e => e.target.style.borderColor = '#f97316'}
+            onBlur={e => e.target.style.borderColor = '#334155'}
+          />
+        </div>
+
+        {busca.trim().length >= 1 && (
+          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto' }}>
+            {resultadoBusca.length === 0 ? (
+              <div style={{ color: '#475569', fontSize: '0.85rem', textAlign: 'center', padding: '12px' }}>Nenhum produto encontrado</div>
+            ) : resultadoBusca.map(p => (
+              <button key={p.id} onClick={() => { onSelecionar(p.id); setBusca('') }} style={{
+                padding: '14px 16px', border: `2px solid ${produtoId === p.id ? '#f97316' : '#1e293b'}`,
+                borderRadius: '10px', background: produtoId === p.id ? 'rgba(249,115,22,0.1)' : '#1e293b',
+                color: '#f1f5f9', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer',
+                fontFamily: 'inherit', textAlign: 'left',
+              }}>
+                {p.nome}
+                <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px', fontWeight: 400 }}>
+                  Meta: {p.meta_rendimento}% · Porção: {p.porcao_padrao_g}g
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Mostra item selecionado via busca (fora dos FAB) */}
+        {produtoId && !fab.find(p => p.id === produtoId) && !busca && (
+          <div style={{ marginTop: '10px', padding: '12px 16px', border: '2px solid #f97316', borderRadius: '10px', background: 'rgba(249,115,22,0.08)', color: '#f97316', fontWeight: 700, fontSize: '0.95rem' }}>
+            ✓ {produtoSel?.nome}
+          </div>
+        )}
+      </div>
+
+      {/* Fornecedor */}
+      {fornecedores.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Fornecedor (opcional)</label>
+          <select value={fornecedorId} onChange={e => setFornecedorId(e.target.value)} style={{ ...S.input, fontSize: '1rem' }}>
+            <option value="">Selecione o fornecedor...</option>
+            {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+          </select>
+        </div>
+      )}
+
+      <button disabled={!produtoId} onClick={onAvancar} style={{ ...S.btn, opacity: produtoId ? 1 : 0.4 }}>
+        Próximo →
+      </button>
+    </div>
+  )
+}
+
 // ── Produção (wizard simplificado para cozinha) ───────────────────────────────
 function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
   const [etapa, setEtapa]         = useState(0) // 0=produto 1=pesos 2=ingredientes
@@ -310,39 +415,15 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
 
         {/* ETAPA 0 — PRODUTO */}
         {etapa === 0 && (
-          <div style={{ ...S.card, padding: '24px' }}>
-            <div style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '20px' }}>🍳 O que você está produzindo?</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-              {produtos.map(p => (
-                <button key={p.id} onClick={() => selecionarProduto(p.id)} style={{
-                  padding: '18px 20px', border: `2px solid ${produtoId === p.id ? '#f97316' : '#334155'}`,
-                  borderRadius: '12px', background: produtoId === p.id ? 'rgba(249,115,22,0.1)' : '#0f172a',
-                  color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
-                  fontFamily: 'inherit', textAlign: 'left',
-                }}>
-                  {p.nome}
-                  <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px', fontWeight: 400 }}>
-                    Meta: {p.meta_rendimento}% · Porção: {p.porcao_padrao_g}g
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {produtos.length > 0 && fornecedores.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8' }}>Fornecedor (opcional)</label>
-                <select value={fornecedorId} onChange={e => setFornecedorId(e.target.value)}
-                  style={{ ...S.input, fontSize: '1rem' }}>
-                  <option value="">Selecione o fornecedor...</option>
-                  {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                </select>
-              </div>
-            )}
-
-            <button disabled={!produtoId} onClick={() => setEtapa(1)} style={{ ...S.btn, opacity: produtoId ? 1 : 0.4 }}>
-              Próximo →
-            </button>
-          </div>
+          <EtapaProduto
+            produtos={produtos}
+            fornecedores={fornecedores}
+            produtoId={produtoId}
+            fornecedorId={fornecedorId}
+            setFornecedorId={setFornecedorId}
+            onSelecionar={selecionarProduto}
+            onAvancar={() => setEtapa(1)}
+          />
         )}
 
         {/* ETAPA 1 — PESAGEM */}
