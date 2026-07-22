@@ -144,12 +144,17 @@ export default function AdminDashboard() {
       supabase.from('producoes').select('*, produtos(nome, meta_rendimento)').order('created_at', { ascending: false }).limit(150),
       supabase.from('fornecedores').select('*'),
     ])
-    setProdutos(prods || [])
+    // FAB primeiro, depois o restante em ordem alfabética
+    const fab    = (prods || []).filter(p => p.nome.toUpperCase().includes('FAB'))
+    const outros = (prods || []).filter(p => !p.nome.toUpperCase().includes('FAB'))
+    const ordenados = [...fab, ...outros]
+    setProdutos(ordenados)
     setInsumos(ins || [])
     setHistoricoPrecos(precs || [])
     setProducoes(prod || [])
     setFornPendentes((forn || []).filter(f => f.aprovado === false))
-    if (prods?.length) setProdutoSelecionado(prods[0].id)
+    if (fab.length) setProdutoSelecionado(fab[0].id)
+    else if (ordenados.length) setProdutoSelecionado(ordenados[0].id)
     if (ins?.length) setInsumoSelecionado(ins[0].id)
     setCarregando(false)
   }
@@ -370,7 +375,18 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '0.85rem', color: 'var(--cor-texto-suave)', fontWeight: 600 }}>Produto:</span>
           <select value={produtoSelecionado} onChange={e => setProdutoSelecionado(e.target.value)} className="select-padrao">
-            {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            {(() => {
+              const fab    = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
+              const outros = produtos.filter(p => !p.nome.toUpperCase().includes('FAB'))
+              return <>
+                {fab.length > 0 && <optgroup label="🏭 Fabricação própria">
+                  {fab.map(p => <option key={p.id} value={p.id}>{p.nome.replace(/ ?- ?FAB/i, '')}</option>)}
+                </optgroup>}
+                {outros.length > 0 && <optgroup label="── Outros produtos ──">
+                  {outros.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                </optgroup>}
+              </>
+            })()}
           </select>
         </div>
       </div>
