@@ -8,6 +8,16 @@ const ABAS = ['Produtos & Fichas', 'Insumos', 'Fornecedores']
 const CATEGORIAS_PRODUTO = ['Carnes', 'Aves', 'Peixes', 'Molhos', 'Guarnições', 'Sobremesas', 'Massas', 'Outros']
 const CATEGORIAS_INSUMO_PADRAO = ['Carnes e Aves', 'Peixes e Frutos do Mar', 'Laticínios e Ovos', 'Hortifruti', 'Temperos e Condimentos', 'Óleos e Gorduras', 'Grãos e Cereais', 'Molhos e Caldos', 'Bebidas', 'Embalagens', 'Outros']
 
+// Retorna itens da lista com nome parecido com o digitado
+function encontrarSimilares(nomeNovo, lista, chave = 'nome') {
+  const n = nomeNovo.trim().toLowerCase()
+  if (n.length < 3) return []
+  return lista.filter(item => {
+    const e = item[chave].toLowerCase()
+    return e === n || e.includes(n) || n.includes(e)
+  })
+}
+
 function useCatsInsumo() {
   const KEY = 'cats_insumo_v1'
   const [cats, setCats] = useState(() => {
@@ -198,6 +208,16 @@ function ProdutosComFicha() {
     e.preventDefault()
     setErro(''); setMsg('')
     if (!empresaId && modo === 'novo') { setErro('Empresa não encontrada. Faça logout e entre novamente.'); return }
+
+    if (modo === 'novo') {
+      const similares = encontrarSimilares(fNome, produtos)
+      if (similares.length > 0) {
+        const nomes = similares.map(p => `"${p.nome}"`).join(', ')
+        const ok = window.confirm(`⚠️ Já existe um produto com nome parecido: ${nomes}.\n\nDeseja criar "${fNome.trim()}" mesmo assim?`)
+        if (!ok) return
+      }
+    }
+
     setSalvando(true)
 
     if (modo === 'novo') {
@@ -989,6 +1009,15 @@ function CadastroInsumos() {
     e.preventDefault()
     setErro(''); setMensagem('')
     if (!empresaId) { setErro('Empresa não encontrada. Faça logout e entre novamente.'); return }
+
+    // Aviso de nome similar
+    const similares = encontrarSimilares(nome, insumos)
+    if (similares.length > 0) {
+      const nomes = similares.map(i => `"${i.nome}"`).join(', ')
+      const ok = window.confirm(`⚠️ Já existe um insumo com nome parecido: ${nomes}.\n\nDeseja cadastrar "${nome.trim()}" mesmo assim?`)
+      if (!ok) return
+    }
+
     setSalvando(true)
     const { error } = await supabase.from('insumos').insert({
       empresa_id: empresaId, nome, preco_por_kg: parseFloat(preco) || 0, unidade_padrao: unidade, categoria,
