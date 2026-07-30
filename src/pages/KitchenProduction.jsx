@@ -58,6 +58,8 @@ export default function KitchenProduction() {
   const [fichaAberta, setFichaAberta] = useState(false)
   const [fichaOriginal, setFichaOriginal] = useState([]) // quantidades padrão da ficha
 
+  const [buscaProd, setBuscaProd] = useState('')
+
   // Para sugestão de novo fornecedor
   const [sugerindoFornecedor, setSugerindoFornecedor] = useState(false)
   const [novoFornNome, setNovoFornNome] = useState('')
@@ -205,11 +207,11 @@ export default function KitchenProduction() {
     setFornSugerido(false); setSugerindoFornecedor(false)
   }
 
-  // Agrupa produtos por categoria
-  const porCategoria = produtos.reduce((acc, p) => {
-    const cat = p.categoria || 'Outros'
-    if (!acc[cat]) acc[cat] = []; acc[cat].push(p); return acc
-  }, {})
+  // Mostra apenas itens FAB (fabricação própria) + busca para outros
+  const produtosFab = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
+  const resultadoBusca = buscaProd.trim().length >= 1
+    ? produtos.filter(p => p.nome.toLowerCase().includes(buscaProd.toLowerCase()))
+    : []
 
   return (
     <div className="wizard-container">
@@ -235,13 +237,14 @@ export default function KitchenProduction() {
           <h2 className="wizard-titulo">O que você vai produzir?</h2>
           <p className="wizard-subtitulo">Toque no produto desta produção.</p>
 
-          {Object.entries(porCategoria).map(([cat, lista]) => (
-            <div key={cat} style={{ marginBottom: '20px' }}>
+          {/* Itens de fabricação própria (FAB) */}
+          {produtosFab.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cor-texto-suave)', marginBottom: '10px' }}>
-                {EMOJI_PRODUTO[cat] || '🍽️'} {cat}
+                🏭 Fabricação Própria
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
-                {lista.map(p => (
+                {produtosFab.map(p => (
                   <button key={p.id} onClick={() => aoSelecionarProduto(p)} style={{
                     padding: '20px 16px', borderRadius: '14px', border: '2.5px solid',
                     borderColor: produtoId === p.id ? 'var(--cor-primaria)' : 'var(--cor-borda)',
@@ -253,14 +256,13 @@ export default function KitchenProduction() {
                       width: '44px', height: '44px', borderRadius: '10px', margin: '0 auto 8px',
                       background: produtoId === p.id ? 'var(--cor-primaria)' : 'var(--cor-fundo)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: EMOJI_PRODUTO[p.categoria] !== '🍳' ? '1.4rem' : '0.85rem',
-                      fontWeight: 800,
+                      fontSize: '1.4rem', fontWeight: 800,
                       color: produtoId === p.id ? 'white' : 'var(--cor-texto-suave)',
                     }}>
-                      {EMOJI_PRODUTO[p.categoria] !== '🍳' ? EMOJI_PRODUTO[p.categoria] : p.nome.slice(0, 2).toUpperCase()}
+                      🏭
                     </div>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: produtoId === p.id ? 'var(--cor-primaria)' : 'var(--cor-texto)', lineHeight: 1.3 }}>
-                      {p.nome}
+                      {p.nome.replace(/ ?- ?FAB/i, '')}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)', marginTop: '4px' }}>
                       Meta {p.meta_rendimento}%
@@ -269,7 +271,39 @@ export default function KitchenProduction() {
                 ))}
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Campo de busca para outros produtos */}
+          <div style={{ marginTop: '8px' }}>
+            <input
+              type="text"
+              placeholder="Buscar outro produto..."
+              value={buscaProd}
+              onChange={e => setBuscaProd(e.target.value)}
+              className="input-padrao"
+              style={{ width: '100%' }}
+            />
+            {resultadoBusca.length > 0 && (
+              <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {resultadoBusca.map(p => (
+                  <button key={p.id} onClick={() => { aoSelecionarProduto(p); setBuscaProd('') }} style={{
+                    padding: '8px 14px', borderRadius: '20px', border: '2px solid',
+                    borderColor: produtoId === p.id ? 'var(--cor-primaria)' : 'var(--cor-borda)',
+                    background: produtoId === p.id ? 'rgba(249,115,22,0.08)' : 'var(--cor-fundo-card)',
+                    cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
+                    color: produtoId === p.id ? 'var(--cor-primaria)' : 'var(--cor-texto)',
+                  }}>
+                    {p.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+            {produtoSelecionado && !produtoSelecionado.nome.toUpperCase().includes('FAB') && (
+              <div style={{ marginTop: '8px', padding: '8px 14px', borderRadius: '20px', display: 'inline-block', background: 'rgba(249,115,22,0.08)', border: '2px solid var(--cor-primaria)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--cor-primaria)' }}>
+                ✓ {produtoSelecionado.nome}
+              </div>
+            )}
+          </div>
 
           {produtos.length === 0 && (
             <div style={{ textAlign: 'center', padding: '32px', color: 'var(--cor-texto-suave)' }}>
