@@ -394,19 +394,35 @@ function ProdutosComFicha() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {lista.map(p => (
-                <button key={p.id} onClick={() => selecionarProduto(p)} style={{
-                  padding: '12px 14px', borderRadius: '10px', border: '2px solid',
-                  borderColor: selecionado?.id === p.id ? 'var(--cor-primaria)' : 'var(--cor-borda)',
-                  background: selecionado?.id === p.id ? 'rgba(249,115,22,0.08)' : 'var(--cor-fundo-card)',
-                  cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-                }}>
-                  <div style={{ fontWeight: 700, color: selecionado?.id === p.id ? 'var(--cor-primaria)' : 'var(--cor-texto)', fontSize: '0.95rem' }}>
-                    {p.nome}
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
-                    {p.porcao_padrao_g}g · Meta {p.meta_rendimento}%
-                  </div>
-                </button>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button onClick={() => selecionarProduto(p)} style={{
+                    flex: 1, padding: '12px 14px', borderRadius: '10px', border: '2px solid',
+                    borderColor: selecionado?.id === p.id ? 'var(--cor-primaria)' : 'var(--cor-borda)',
+                    background: selecionado?.id === p.id ? 'rgba(249,115,22,0.08)' : 'var(--cor-fundo-card)',
+                    cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                  }}>
+                    <div style={{ fontWeight: 700, color: selecionado?.id === p.id ? 'var(--cor-primaria)' : 'var(--cor-texto)', fontSize: '0.95rem' }}>
+                      {p.nome}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
+                      {p.porcao_padrao_g}g · Meta {p.meta_rendimento}%
+                    </div>
+                  </button>
+                  <button onClick={async (e) => {
+                    e.stopPropagation()
+                    if (!window.confirm(`Excluir "${p.nome}"?`)) return
+                    await supabase.from('produto_ingredientes').delete().eq('produto_id', p.id)
+                    await supabase.from('produtos').delete().eq('id', p.id)
+                    if (selecionado?.id === p.id) { setSelecionado(null); setFicha([]) }
+                    carregarProdutos()
+                  }} title="Excluir produto" style={{
+                    padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.3)',
+                    background: 'rgba(239,68,68,0.06)', color: 'var(--cor-perigo)',
+                    cursor: 'pointer', fontSize: '1rem', lineHeight: 1, flexShrink: 0,
+                  }}>
+                    🗑️
+                  </button>
+                </div>
               ))}
             </div>
           </div>
