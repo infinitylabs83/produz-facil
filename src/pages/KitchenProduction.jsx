@@ -234,25 +234,32 @@ export default function KitchenProduction() {
       {/* ══ ETAPA 0 — Produto ══════════════════════════════ */}
       {etapa === 0 && (
         <div className="card">
-          <h2 className="wizard-titulo">O que você vai produzir?</h2>
-          <p className="wizard-subtitulo">Selecione o item de fabricação ou pesquise pelo nome.</p>
+          <h2 className="wizard-titulo" style={{ fontSize: '1.3rem' }}>O que você vai produzir?</h2>
+          <p className="wizard-subtitulo">Selecione o item ou pesquise pelo nome.</p>
 
-          {/* Seletor de itens FAB */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
+          {/* Seletor de itens FAB — grande para toque fácil */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '10px' }}>
               🏭 Fabricação Própria
             </label>
             <select
-              className="select-padrao"
               value={produtoId}
               onChange={e => {
                 const p = produtosFab.find(x => x.id === e.target.value)
                 if (p) aoSelecionarProduto(p)
                 else { setProdutoId(''); setProdutoSelecionado(null); setIngredientes([]) }
               }}
-              style={{ width: '100%' }}
+              style={{
+                width: '100%', padding: '18px 16px', fontSize: '1.1rem', fontWeight: 600,
+                borderRadius: '12px', border: '2px solid var(--cor-borda)',
+                background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)',
+                appearance: 'none', WebkitAppearance: 'none',
+                backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
+                paddingRight: '44px', cursor: 'pointer',
+              }}
             >
-              <option value="">— Selecione o item —</option>
+              <option value="">— Toque para selecionar —</option>
               {produtosFab.map(p => (
                 <option key={p.id} value={p.id}>{p.nome.replace(/ ?- ?FAB/i, '')}</option>
               ))}
@@ -260,25 +267,29 @@ export default function KitchenProduction() {
           </div>
 
           {/* Busca para outros produtos */}
-          <div style={{ borderTop: '1px solid var(--cor-borda)', paddingTop: '14px' }}>
-            <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>
-              🔍 Outro produto
+          <div style={{ borderTop: '1px solid var(--cor-borda)', paddingTop: '16px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '10px' }}>
+              🔍 Buscar outro produto
             </label>
             <input
               type="text"
-              placeholder="Digite para pesquisar..."
+              placeholder="Digite o nome..."
               value={buscaProd}
               onChange={e => { setBuscaProd(e.target.value); setProdutoId(''); setProdutoSelecionado(null) }}
-              className="input-padrao"
-              style={{ width: '100%' }}
+              style={{
+                width: '100%', padding: '18px 16px', fontSize: '1.1rem',
+                borderRadius: '12px', border: '2px solid var(--cor-borda)',
+                background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)',
+                boxSizing: 'border-box',
+              }}
             />
             {resultadoBusca.length > 0 && (
-              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto' }}>
                 {resultadoBusca.map(p => (
                   <button key={p.id} onClick={() => { aoSelecionarProduto(p); setBuscaProd('') }} style={{
-                    padding: '10px 14px', borderRadius: '8px', border: '1.5px solid var(--cor-borda)',
+                    padding: '16px 18px', borderRadius: '10px', border: '2px solid var(--cor-borda)',
                     background: 'var(--cor-fundo-card)', cursor: 'pointer', textAlign: 'left',
-                    fontSize: '0.88rem', fontWeight: 600, color: 'var(--cor-texto)',
+                    fontSize: '1rem', fontWeight: 600, color: 'var(--cor-texto)',
                   }}>
                     {p.nome}
                   </button>
@@ -289,13 +300,13 @@ export default function KitchenProduction() {
 
           {/* Produto selecionado (confirmação visual) */}
           {produtoSelecionado && (
-            <div style={{ marginTop: '14px', padding: '12px 16px', borderRadius: '10px', background: 'rgba(249,115,22,0.08)', border: '2px solid var(--cor-primaria)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.2rem' }}>✅</span>
+            <div style={{ marginTop: '16px', padding: '16px 18px', borderRadius: '12px', background: 'rgba(249,115,22,0.08)', border: '2.5px solid var(--cor-primaria)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.8rem' }}>✅</span>
               <div>
-                <div style={{ fontWeight: 700, color: 'var(--cor-primaria)', fontSize: '0.95rem' }}>
+                <div style={{ fontWeight: 800, color: 'var(--cor-primaria)', fontSize: '1.1rem', lineHeight: 1.2 }}>
                   {produtoSelecionado.nome.replace(/ ?- ?FAB/i, '')}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--cor-texto-suave)', marginTop: '3px' }}>
                   Meta {produtoSelecionado.meta_rendimento}% · Porção {produtoSelecionado.porcao_padrao_g}g
                 </div>
               </div>
