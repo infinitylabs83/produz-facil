@@ -222,6 +222,48 @@ function ProdutosComFicha() {
     carregarProdutos()
   }
 
+  // ── Duplicar ficha técnica ──
+  const [duplicandoId, setDuplicandoId] = useState(null) // id do produto sendo duplicado
+  const [nomedup, setNomeDup] = useState('')
+  const [duplicando, setDuplicando] = useState(false)
+
+  function abrirDuplicar(p) {
+    setDuplicandoId(p.id)
+    setNomeDup(p.nome + ' (cópia)')
+  }
+
+  async function confirmarDuplicar() {
+    if (!nomedup.trim() || !empresaId) return
+    setDuplicando(true)
+    // Busca produto original
+    const original = produtos.find(p => p.id === duplicandoId)
+    // Cria novo produto com os mesmos dados
+    const { data: novo, error } = await supabase.from('produtos').insert({
+      empresa_id: empresaId,
+      nome: nomedup.trim(),
+      porcao_padrao_g: original.porcao_padrao_g,
+      meta_rendimento: original.meta_rendimento,
+      categoria: original.categoria,
+    }).select().single()
+    if (error) { setDuplicando(false); return }
+    // Copia os ingredientes da ficha técnica
+    const { data: ings } = await supabase.from('produto_ingredientes')
+      .select('insumo_id, quantidade_padrao, unidade_uso')
+      .eq('produto_id', duplicandoId)
+    if (ings && ings.length > 0) {
+      await supabase.from('produto_ingredientes').insert(
+        ings.map(i => ({ produto_id: novo.id, insumo_id: i.insumo_id, quantidade_padrao: i.quantidade_padrao, unidade_uso: i.unidade_uso }))
+      )
+    }
+    setDuplicando(false)
+    setDuplicandoId(null)
+    setNomeDup('')
+    await carregarProdutos()
+    selecionarProduto(novo)
+    setMsg('Ficha duplicada! Edite o que precisar.')
+    setTimeout(() => setMsg(''), 4000)
+  }
+
   // ── Edição inline de ingredientes já na ficha ──
   const [editIngId, setEditIngId]       = useState(null)
   const [editIngQtd, setEditIngQtd]     = useState('')
@@ -334,6 +376,46 @@ function ProdutosComFicha() {
   return (
     <div className="cadastros-grid">
 
+      {/* Modal de duplicar ficha */}
+      {duplicandoId && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+        }}>
+          <div style={{ background: 'var(--cor-fundo-card)', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '1.8rem', marginBottom: '10px' }}>📋</div>
+            <h3 style={{ fontWeight: 800, fontSize: '1.15rem', marginBottom: '6px' }}>Duplicar ficha técnica</h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--cor-texto-suave)', marginBottom: '20px' }}>
+              Todos os ingredientes serão copiados. Depois é só renomear e ajustar o que precisar.
+            </p>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' }}>
+              Nome do novo produto
+            </label>
+            <input
+              value={nomedup}
+              onChange={e => setNomeDup(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && confirmarDuplicar()}
+              autoFocus
+              style={{ width: '100%', padding: '12px 14px', fontSize: '1rem', fontWeight: 600, border: '2px solid var(--cor-primaria)', borderRadius: '10px', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', boxSizing: 'border-box', outline: 'none', marginBottom: '18px' }}
+            />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => { setDuplicandoId(null); setNomeDup('') }} style={{
+                flex: 1, padding: '12px', borderRadius: '10px', border: '2px solid var(--cor-borda)',
+                background: 'transparent', color: 'var(--cor-texto)', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem',
+              }}>
+                Cancelar
+              </button>
+              <button onClick={confirmarDuplicar} disabled={duplicando || !nomedup.trim()} style={{
+                flex: 2, padding: '12px', borderRadius: '10px', border: 'none',
+                background: 'var(--cor-primaria)', color: 'white', fontWeight: 700, cursor: 'pointer', fontSize: '0.95rem',
+              }}>
+                {duplicando ? 'Duplicando...' : '✅ Duplicar e abrir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PAINEL ESQUERDO — lista de produtos */}
       <div>
         <button className="btn btn-primario" onClick={iniciarNovo} style={{ width: '100%', marginBottom: '10px' }}>
@@ -407,6 +489,13 @@ function ProdutosComFicha() {
                     <div style={{ fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
                       {p.porcao_padrao_g}g · Meta {p.meta_rendimento}%
                     </div>
+                  </button>
+                  <button onClick={e => { e.stopPropagation(); abrirDuplicar(p) }} title="Duplicar ficha" style={{
+                    padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.3)',
+                    background: 'rgba(59,130,246,0.06)', color: 'var(--cor-info)',
+                    cursor: 'pointer', fontSize: '1rem', lineHeight: 1, flexShrink: 0,
+                  }}>
+                    📋
                   </button>
                   <button onClick={async (e) => {
                     e.stopPropagation()
