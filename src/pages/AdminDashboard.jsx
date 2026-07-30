@@ -536,8 +536,14 @@ export default function AdminDashboard() {
               placeholder="Buscar insumo..."
               value={buscaInsumo}
               onChange={e => {
-                setBuscaInsumo(e.target.value)
-                const match = insumos.find(i => i.nome.toLowerCase().includes(e.target.value.toLowerCase()))
+                const termo = e.target.value
+                setBuscaInsumo(termo)
+                // Prefere match exato, depois início do nome, depois qualquer match
+                const t = termo.toLowerCase()
+                const exato   = insumos.find(i => i.nome.toLowerCase() === t)
+                const inicio  = insumos.find(i => i.nome.toLowerCase().startsWith(t))
+                const qualquer = insumos.find(i => i.nome.toLowerCase().includes(t))
+                const match = exato || inicio || qualquer
                 if (match) setInsumoSelecionado(match.id)
               }}
               style={{ width: '100%', paddingLeft: '32px', padding: '8px 12px 8px 32px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.85rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', boxSizing: 'border-box' }}
