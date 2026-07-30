@@ -6,7 +6,22 @@ import ImportarReceitaPDF from '../components/ImportarReceitaPDF'
 const ABAS = ['Produtos & Fichas', 'Insumos', 'Fornecedores']
 
 const CATEGORIAS_PRODUTO = ['Carnes', 'Aves', 'Peixes', 'Molhos', 'Guarnições', 'Sobremesas', 'Massas', 'Outros']
-const CATEGORIAS_INSUMO  = ['Carnes e Aves', 'Peixes e Frutos do Mar', 'Laticínios e Ovos', 'Hortifruti', 'Temperos e Condimentos', 'Óleos e Gorduras', 'Grãos e Cereais', 'Molhos e Caldos', 'Bebidas', 'Embalagens', 'Outros']
+const CATEGORIAS_INSUMO_PADRAO = ['Carnes e Aves', 'Peixes e Frutos do Mar', 'Laticínios e Ovos', 'Hortifruti', 'Temperos e Condimentos', 'Óleos e Gorduras', 'Grãos e Cereais', 'Molhos e Caldos', 'Bebidas', 'Embalagens', 'Outros']
+
+function useCatsInsumo() {
+  const KEY = 'cats_insumo_v1'
+  const [cats, setCats] = useState(() => {
+    try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : CATEGORIAS_INSUMO_PADRAO } catch { return CATEGORIAS_INSUMO_PADRAO }
+  })
+  function salvar(nova) { setCats(nova); localStorage.setItem(KEY, JSON.stringify(nova)) }
+  function adicionar(nome) { if (!nome.trim() || cats.includes(nome.trim())) return; salvar([...cats, nome.trim()]) }
+  function renomear(antiga, nova) {
+    if (!nova.trim() || cats.includes(nova.trim())) return
+    salvar(cats.map(c => c === antiga ? nova.trim() : c))
+  }
+  function remover(cat) { salvar(cats.filter(c => c !== cat)) }
+  return { cats, adicionar, renomear, remover }
+}
 
 const COR_CAT = {
   'Carnes e Aves': 'rgba(239,68,68,0.12)', 'Peixes e Frutos do Mar': 'rgba(59,130,246,0.12)',
@@ -931,6 +946,7 @@ function ProdutosComFicha() {
    ===================================================== */
 function CadastroInsumos() {
   const empresaId = useEmpresaId()
+  const { cats: CATEGORIAS_INSUMO, adicionar: addCat, renomear: renameCat, remover: removeCat } = useCatsInsumo()
   const [insumos, setInsumos] = useState([])
   const [historico, setHistorico] = useState([])
 
@@ -940,7 +956,7 @@ function CadastroInsumos() {
   const [categoria, setCategoria] = useState('Outros')
 
   const [busca, setBusca]               = useState('')
-  const [filtroCategoria, setFiltroCategoria] = useState('Todas')
+  const [filtroCategoria, setFiltroCategoria] = useState('Todos')
   const [verHistoricoId, setVerHistoricoId]   = useState(null)
 
   const [editandoId, setEditandoId]       = useState(null)
@@ -948,6 +964,11 @@ function CadastroInsumos() {
   const [editPreco, setEditPreco]         = useState('')
   const [editUnidade, setEditUnidade]     = useState('kg')
   const [editCategoria, setEditCategoria] = useState('Outros')
+
+  // Gerenciador de categorias
+  const [gerenciarCats, setGerenciarCats] = useState(false)
+  const [novaCat, setNovaCat] = useState('')
+  const [renomCat, setRenomCat] = useState({}) // { [cat]: novoNome }
 
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
@@ -1014,7 +1035,7 @@ function CadastroInsumos() {
 
   const insumosFiltrados = insumos.filter(i => {
     const bOk = i.nome.toLowerCase().includes(busca.toLowerCase())
-    const cOk = filtroCategoria === 'Todas' || i.categoria === filtroCategoria
+    const cOk = filtroCategoria === 'Todos' || i.categoria === filtroCategoria
     return bOk && cOk
   })
 
@@ -1025,6 +1046,65 @@ function CadastroInsumos() {
 
   return (
     <div className="cadastros-grid" style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '24px', alignItems: 'start' }}>
+
+      {/* Modal de gerenciar categorias */}
+      {gerenciarCats && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <div style={{ background: 'var(--cor-fundo-card)', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '460px', maxHeight: '80vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h3 style={{ fontWeight: 800, fontSize: '1.1rem' }}>🏷️ Gerenciar categorias</h3>
+              <button onClick={() => setGerenciarCats(false)} style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--cor-texto-suave)' }}>✕</button>
+            </div>
+            {/* Adicionar nova */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <input
+                value={novaCat}
+                onChange={e => setNovaCat(e.target.value)}
+                placeholder="Nome da nova categoria..."
+                onKeyDown={e => { if (e.key === 'Enter') { addCat(novaCat); setNovaCat('') } }}
+                style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '2px solid var(--cor-primaria)', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '0.9rem' }}
+              />
+              <button onClick={() => { addCat(novaCat); setNovaCat('') }} style={{ padding: '10px 14px', borderRadius: '8px', background: 'var(--cor-primaria)', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer' }}>
+                + Adicionar
+              </button>
+            </div>
+            {/* Lista de categorias */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {CATEGORIAS_INSUMO.map(cat => (
+                <div key={cat} style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--cor-borda)', background: 'var(--cor-fundo)' }}>
+                  <input
+                    value={renomCat[cat] !== undefined ? renomCat[cat] : cat}
+                    onChange={e => setRenomCat(prev => ({ ...prev, [cat]: e.target.value }))}
+                    onBlur={() => {
+                      if (renomCat[cat] && renomCat[cat] !== cat) {
+                        renameCat(cat, renomCat[cat])
+                        setRenomCat(prev => { const n = { ...prev }; delete n[cat]; return n })
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && renomCat[cat] && renomCat[cat] !== cat) {
+                        renameCat(cat, renomCat[cat])
+                        setRenomCat(prev => { const n = { ...prev }; delete n[cat]; return n })
+                      }
+                    }}
+                    style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--cor-borda)', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', fontSize: '0.9rem' }}
+                  />
+                  <button onClick={() => {
+                    if (!window.confirm(`Excluir categoria "${cat}"? Os insumos nessa categoria ficarão sem categoria.`)) return
+                    removeCat(cat)
+                  }} title="Excluir categoria" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: 'var(--cor-perigo)', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)', marginTop: '14px' }}>
+              Para renomear: edite o campo e pressione Enter ou clique fora.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <h3 style={{ marginBottom: '16px', fontWeight: 700 }}>Novo insumo</h3>
         {erro && <div className="mensagem-erro">{erro}</div>}
@@ -1068,8 +1148,11 @@ function CadastroInsumos() {
           </div>
           <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
             style={{ padding: '10px 12px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.85rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)' }}>
-            {['Todas', ...CATEGORIAS_INSUMO].map(c => <option key={c} value={c}>{c}</option>)}
+            {['Todos', ...CATEGORIAS_INSUMO].map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+          <button onClick={() => setGerenciarCats(true)} title="Gerenciar categorias" style={{ padding: '10px 12px', border: '2px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo-card)', cursor: 'pointer', fontSize: '1rem', flexShrink: 0 }}>
+            🏷️
+          </button>
         </div>
 
         <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)', marginBottom: '12px' }}>
@@ -1084,7 +1167,7 @@ function CadastroInsumos() {
 
         {Object.entries(porCategoria).map(([cat, lista]) => (
           <div key={cat} style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'inline-block', padding: '2px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, background: COR_CAT[cat] || '#f1f5f9', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ display: 'inline-block', padding: '2px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, background: COR_CAT[cat] || 'rgba(100,116,139,0.15)', color: 'var(--cor-texto)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {cat}
             </div>
             {lista.map(insumo => {
