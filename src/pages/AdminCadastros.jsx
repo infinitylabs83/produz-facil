@@ -123,6 +123,7 @@ function ProdutosComFicha() {
   const [ficha, setFicha]           = useState([])
   const [adicionandoIng, setAdicionandoIng] = useState(false)
   const [ingInsumoId, setIngInsumoId]   = useState('')
+  const [buscaIng, setBuscaIng] = useState('')
   const [ingQtd, setIngQtd]             = useState('')
   const [ingUnidade, setIngUnidade]     = useState('kg')
 
@@ -812,13 +813,25 @@ function ProdutosComFicha() {
                   <form onSubmit={adicionarIngrediente}>
                     <div className="campo-grupo">
                       <label>Insumo</label>
-                      <select value={ingInsumoId} onChange={e => selecionarInsumoFicha(e.target.value)} required>
+                      <div style={{ position: 'relative', marginBottom: '6px' }}>
+                        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cor-texto-suave)', fontSize: '0.9rem', pointerEvents: 'none' }}>🔍</span>
+                        <input
+                          type="text"
+                          placeholder="Pesquisar insumo..."
+                          value={buscaIng}
+                          onChange={e => setBuscaIng(e.target.value)}
+                          style={{ width: '100%', padding: '8px 10px 8px 32px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.88rem', fontFamily: 'inherit', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <select value={ingInsumoId} onChange={e => selecionarInsumoFicha(e.target.value)} required size={Math.min(8, insumosDisponiveis.filter(i => !buscaIng || i.nome.toLowerCase().includes(buscaIng.toLowerCase())).length + 1)} style={{ width: '100%', borderRadius: '8px', border: '2px solid var(--cor-borda)', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '0.88rem', fontFamily: 'inherit' }}>
                         <option value="">— selecione —</option>
-                        {insumosDisponiveis.map(i => (
-                          <option key={i.id} value={i.id}>
-                            {i.nome} · R$ {parseFloat(i.preco_por_kg).toFixed(2)}/{i.unidade_padrao}
-                          </option>
-                        ))}
+                        {insumosDisponiveis
+                          .filter(i => !buscaIng || i.nome.toLowerCase().includes(buscaIng.toLowerCase()))
+                          .map(i => (
+                            <option key={i.id} value={i.id}>
+                              {i.nome} · R$ {parseFloat(i.preco_por_kg).toFixed(2)}/{i.unidade_padrao}
+                            </option>
+                          ))}
                       </select>
                       {insumos.length === 0 && <span className="ajuda">Cadastre insumos na aba <strong>Insumos</strong> primeiro.</span>}
                     </div>
@@ -840,7 +853,7 @@ function ProdutosComFicha() {
                     </div>
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                       <button type="submit" className="btn btn-primario" style={{ flex: 1, padding: '10px' }}>✓ Confirmar</button>
-                      <button type="button" className="btn btn-secundario" onClick={() => { setAdicionandoIng(false); setErro('') }} style={{ padding: '10px 16px' }}>Cancelar</button>
+                      <button type="button" className="btn btn-secundario" onClick={() => { setAdicionandoIng(false); setErro(''); setBuscaIng('') }} style={{ padding: '10px 16px' }}>Cancelar</button>
                     </div>
                   </form>
                 </div>
