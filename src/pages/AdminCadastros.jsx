@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import FichaTecnicaPrint from '../components/FichaTecnicaPrint'
 import ImportarReceitaPDF from '../components/ImportarReceitaPDF'
@@ -138,12 +138,29 @@ function ProdutosComFicha() {
   const [printAberto, setPrintAberto] = useState(false)
   const [pdfModalAberto, setPdfModalAberto] = useState(false)
 
+  // sub-ficha: uma linha da ficha pode ser um insumo comprado OU outro produto
+  // de fabricação (FAB), que tem ficha e custo/kg próprios.
+  const [todasLinhasFicha, setTodasLinhasFicha] = useState([])
+  const [ingTipo, setIngTipo]           = useState('insumo') // 'insumo' | 'produto'
+  const [ingProdutoRefId, setIngProdutoRefId] = useState('')
+
   // carrega dados iniciais
   useEffect(() => {
     carregarProdutos()
     supabase.from('insumos').select('id, nome, preco_por_kg, unidade_padrao').order('nome')
       .then(({ data }) => setInsumos(data || []))
+    carregarTodasLinhasFicha()
   }, [])
+
+  // Todas as linhas de ficha da empresa. Necessário porque uma ficha pode usar
+  // outra ficha (sub-ficha FAB), e o custo/kg dela só sai resolvendo a árvore
+  // inteira — não dá pra calcular olhando só a ficha aberta na tela.
+  async function carregarTodasLinhasFicha() {
+    const { data } = await supabase
+      .from('produto_ingredientes')
+      .select('produto_id, insumo_id, produto_ref_id, quantidade_padrao, unidade_uso')
+    setTodasLinhasFicha(data || [])
+  }
 
   async function carregarProdutos() {
     const { data } = await supabase.from('produtos').select('*').order('categoria').order('nome')
@@ -153,7 +170,7 @@ function ProdutosComFicha() {
   async function carregarFicha(prodId) {
     const { data } = await supabase
       .from('produto_ingredientes')
-      .select('id, quantidade_padrao, unidade_uso, insumo_id, insumos(id, nome, preco_por_kg, unidade_padrao)')
+      .select('id, quantidade_padrao, unidade_uso, insumo_id, produto_ref_id, insumos(id, nome, preco_por_kg, unidade_padrao), produto_ref:produtos!produto_ref_id(id, nome, rendimento_kg, porcao_padrao_g)')
       .eq('produto_id', prodId)
     setFicha(data || [])
   }
@@ -318,6 +335,7 @@ function ProdutosComFicha() {
     }).eq('id', id)
     setEditIngId(null)
     carregarFicha(selecionado.id)
+    carregarTodasLinhasFicha() // custo/kg de quem usa esta ficha depende disso
   }
 
   // ── Ficha técnica ──
@@ -327,25 +345,61 @@ function ProdutosComFicha() {
     if (ins) setIngUnidade(ins.unidade_padrao)
   }
 
+  // Impede ciclo: se o produto que estou adicionando já usa (direta ou
+  // indiretamente) a ficha aberta, aceitar criaria uma receita infinita.
+  function criariaCiclo(produtoRefId, produtoAtualId) {
+    if (produtoRefId === produtoAtualId) return true
+    const linhasPorProduto = new Map()
+    for (const l of todasLinhasFicha) {
+      if (!linhasPorProduto.has(l.produto_id)) linhasPorProduto.set(l.produto_id, [])
+      linhasPorProduto.get(l.produto_id).push(l)
+    }
+    const vistos = new Set()
+    const usa = (id) => {
+      if (id === produtoAtualId) return true
+      if (vistos.has(id)) return false
+      vistos.add(id)
+      return (linhasPorProduto.get(id) || [])
+        .some(l => l.produto_ref_id && usa(l.produto_ref_id))
+    }
+    return usa(produtoRefId)
+  }
+
   async function adicionarIngrediente(e) {
     e.preventDefault()
     setErro('')
-    if (!ingInsumoId) { setErro('Selecione um insumo.'); return }
-    if (ficha.some(f => f.insumo_id === ingInsumoId)) { setErro('Este insumo já está na ficha.'); return }
+    const usandoProduto = ingTipo === 'produto'
+
+    if (usandoProduto) {
+      if (!ingProdutoRefId) { setErro('Selecione o produto de fabricação.'); return }
+      if (ficha.some(f => f.produto_ref_id === ingProdutoRefId)) { setErro('Este produto já está na ficha.'); return }
+      if (criariaCiclo(ingProdutoRefId, selecionado.id)) {
+        setErro('Não dá: esse produto já usa esta ficha, direta ou indiretamente — criaria uma receita circular.')
+        return
+      }
+    } else {
+      if (!ingInsumoId) { setErro('Selecione um insumo.'); return }
+      if (ficha.some(f => f.insumo_id === ingInsumoId)) { setErro('Este insumo já está na ficha.'); return }
+    }
+
     const { error } = await supabase.from('produto_ingredientes').insert({
-      produto_id: selecionado.id, insumo_id: ingInsumoId,
+      produto_id: selecionado.id,
+      insumo_id: usandoProduto ? null : ingInsumoId,
+      produto_ref_id: usandoProduto ? ingProdutoRefId : null,
       quantidade_padrao: parseFloat(ingQtd) || null, unidade_uso: ingUnidade,
     })
     if (error) { setErro('Erro: ' + error.message); return }
-    setIngInsumoId(''); setIngQtd(''); setIngUnidade('kg')
+    setIngInsumoId(''); setIngProdutoRefId(''); setIngQtd(''); setIngUnidade('kg'); setIngTipo('insumo')
     setAdicionandoIng(false)
     carregarFicha(selecionado.id)
+    carregarTodasLinhasFicha()
   }
 
   async function removerIngrediente(id) {
     if (!window.confirm('Remover este ingrediente da ficha?')) return
     await supabase.from('produto_ingredientes').delete().eq('id', id)
     carregarFicha(selecionado.id)
+    carregarTodasLinhasFicha()
   }
 
   // Salva ingredientes importados via PDF na ficha técnica
@@ -364,29 +418,87 @@ function ProdutosComFicha() {
     await carregarFicha(selecionado.id)
   }
 
-  // Custo total de todos os ingredientes
-  const custoFicha = ficha.reduce((acc, f) => {
-    const q = f.quantidade_padrao || 0
-    const qKg = f.unidade_uso === 'g' ? q / 1000 : q
-    return acc + qKg * (f.insumos?.preco_por_kg || 0)
-  }, 0)
+  const emKg = (qtd, unidade) => (unidade === 'g' ? (qtd || 0) / 1000 : (qtd || 0))
+
+  // Rendimento da receita inteira, em kg. É o divisor que fecha o custo/kg:
+  //   custo/kg = custo total dos insumos / rendimento
+  //   (ex.: ROSBIFE - FAB: R$ 789,31 / 10,8 kg = R$ 73,08/kg)
+  // Usa `rendimento_kg` quando existe (vem da ficha do DRE). Sem ele, cai no
+  // comportamento antigo: peso dos ingredientes x meta_rendimento%.
+  function rendimentoDe(produto, pesoIngredientes) {
+    const r = Number(produto?.rendimento_kg)
+    if (r > 0) return r
+    return pesoIngredientes * ((Number(produto?.meta_rendimento) || 100) / 100)
+  }
+
+  // Custo por kg de CADA produto, resolvendo sub-fichas recursivamente:
+  // uma ficha que usa "FRANGO CHAPEADO - FAB" precisa do custo/kg dele, que por
+  // sua vez sai da ficha dele. Memoiza e corta ciclo (A usa B, B usa A).
+  const custoPorKgPorProduto = useMemo(() => {
+    const precoInsumo = new Map(insumos.map(i => [i.id, Number(i.preco_por_kg) || 0]))
+    const produtoById = new Map(produtos.map(p => [p.id, p]))
+    const linhasPorProduto = new Map()
+    for (const l of todasLinhasFicha) {
+      if (!linhasPorProduto.has(l.produto_id)) linhasPorProduto.set(l.produto_id, [])
+      linhasPorProduto.get(l.produto_id).push(l)
+    }
+    const memo = new Map()
+    const visitando = new Set()
+    function custoKg(produtoId) {
+      if (memo.has(produtoId)) return memo.get(produtoId)
+      if (visitando.has(produtoId)) return 0 // ciclo: corta pra não travar a tela
+      visitando.add(produtoId)
+      let custo = 0, peso = 0
+      for (const l of linhasPorProduto.get(produtoId) || []) {
+        const qKg = emKg(Number(l.quantidade_padrao), l.unidade_uso)
+        peso += qKg
+        custo += qKg * (l.produto_ref_id ? custoKg(l.produto_ref_id) : (precoInsumo.get(l.insumo_id) || 0))
+      }
+      const rend = rendimentoDe(produtoById.get(produtoId), peso)
+      const valor = rend > 0 ? custo / rend : 0
+      visitando.delete(produtoId)
+      memo.set(produtoId, valor)
+      return valor
+    }
+    const out = new Map()
+    for (const p of produtos) out.set(p.id, custoKg(p.id))
+    return out
+  }, [insumos, produtos, todasLinhasFicha])
+
+  // Custo/kg de uma linha da ficha: preço do insumo, ou custo/kg da sub-ficha.
+  const custoUnitarioDaLinha = (f) =>
+    f.produto_ref_id
+      ? (custoPorKgPorProduto.get(f.produto_ref_id) || 0)
+      : Number(f.insumos?.preco_por_kg || 0)
+
+  // Custo total de todos os ingredientes (insumos + sub-fichas)
+  const custoFicha = ficha.reduce(
+    (acc, f) => acc + emKg(f.quantidade_padrao, f.unidade_uso) * custoUnitarioDaLinha(f), 0)
 
   // Peso total de todos os ingredientes (em kg)
-  const pesoTotalReceita = ficha.reduce((acc, f) => {
-    const q = f.quantidade_padrao || 0
-    return acc + (f.unidade_uso === 'g' ? q / 1000 : q)
-  }, 0)
+  const pesoTotalReceita = ficha.reduce(
+    (acc, f) => acc + emKg(f.quantidade_padrao, f.unidade_uso), 0)
 
-  // Custo por kg pronto = custo total / (peso total * rendimento%)
-  const metaRend = (selecionado?.meta_rendimento || 100) / 100
-  const custoPorKgFicha = pesoTotalReceita > 0
-    ? custoFicha / (pesoTotalReceita * metaRend)
-    : 0
+  const rendimentoFicha = rendimentoDe(selecionado, pesoTotalReceita)
+  const custoPorKgFicha = rendimentoFicha > 0 ? custoFicha / rendimentoFicha : 0
 
-  // Custo da porção = custo/kg * porção em kg
+  // Custo da porção = custo/kg * porção em kg (informativo)
   const custoPorcaoFicha = custoPorKgFicha * ((selecionado?.porcao_padrao_g || 0) / 1000)
 
   const insumosDisponiveis = insumos.filter(i => !ficha.some(f => f.insumo_id === i.id))
+
+  // Produtos que podem entrar como sub-ficha: exclui o próprio, os que já estão
+  // na ficha e os que criariam receita circular. Itens FAB aparecem primeiro,
+  // que é o caso de uso normal (molho, proteína chapeada, etc.).
+  const produtosDisponiveis = !selecionado ? [] : produtos
+    .filter(p => p.id !== selecionado.id)
+    .filter(p => !ficha.some(f => f.produto_ref_id === p.id))
+    .filter(p => !criariaCiclo(p.id, selecionado.id))
+    .sort((a, b) => {
+      const fa = /FAB/i.test(a.nome) ? 0 : 1
+      const fb = /FAB/i.test(b.nome) ? 0 : 1
+      return fa - fb || a.nome.localeCompare(b.nome, 'pt-BR')
+    })
 
   // filtra por busca e agrupa por categoria (itens FAB vão para "Fabricação")
   const ORDEM_CAT = ['Fabricação', 'Carnes', 'Aves', 'Peixes', 'Molhos', 'Guarnições', 'Sobremesas', 'Massas', 'Adicional', 'Outros']
@@ -710,8 +822,11 @@ function ProdutosComFicha() {
 
               {ficha.map((f, idx) => {
                 const q = f.quantidade_padrao || 0
-                const qKg = f.unidade_uso === 'g' ? q / 1000 : q
-                const custo = qKg * (f.insumos?.preco_por_kg || 0)
+                const qKg = emKg(q, f.unidade_uso)
+                const ehSubFicha = !!f.produto_ref_id
+                const precoUnit = custoUnitarioDaLinha(f)
+                const custo = qKg * precoUnit
+                const nomeLinha = ehSubFicha ? f.produto_ref?.nome : f.insumos?.nome
                 const editando = editIngId === f.id
 
                 return (
@@ -727,14 +842,24 @@ function ProdutosComFicha() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <div style={{
                             width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
-                            background: 'var(--cor-primaria)', color: 'white',
+                            background: ehSubFicha ? '#3b82f6' : 'var(--cor-primaria)', color: 'white',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontWeight: 700, fontSize: '0.75rem',
                           }}>{idx + 1}</div>
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{f.insumos?.nome}</div>
+                            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                              {nomeLinha}
+                              {ehSubFicha && (
+                                <span style={{
+                                  marginLeft: '8px', fontSize: '0.65rem', fontWeight: 700,
+                                  background: '#dbeafe', color: '#1d4ed8',
+                                  padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase',
+                                }}>ficha própria</span>
+                              )}
+                            </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)' }}>
-                              R$ {parseFloat(f.insumos?.preco_por_kg || 0).toFixed(2)}/kg
+                              R$ {precoUnit.toFixed(2)}/kg
+                              {ehSubFicha && ' · custo calculado da ficha dele'}
                             </div>
                           </div>
                         </div>
@@ -811,6 +936,31 @@ function ProdutosComFicha() {
                   <div style={{ fontWeight: 700, color: 'var(--cor-primaria)', marginBottom: '10px', fontSize: '0.9rem' }}>＋ Adicionar ingrediente</div>
                   {erro && <div className="mensagem-erro">{erro}</div>}
                   <form onSubmit={adicionarIngrediente}>
+                    {/* A linha da ficha pode ser um insumo comprado OU outra ficha (ex.: FAB) */}
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                      {[
+                        { v: 'insumo', txt: '🧂 Insumo', hint: 'algo que você compra' },
+                        { v: 'produto', txt: '🏭 Produto de fabricação', hint: 'outra ficha, ex.: FAB' },
+                      ].map(op => (
+                        <button
+                          key={op.v}
+                          type="button"
+                          onClick={() => { setIngTipo(op.v); setErro('') }}
+                          style={{
+                            flex: 1, padding: '8px', borderRadius: '8px', cursor: 'pointer',
+                            fontFamily: 'inherit', fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.3,
+                            border: ingTipo === op.v ? '2px solid #3b82f6' : '2px solid var(--cor-borda)',
+                            background: ingTipo === op.v ? '#dbeafe' : 'var(--cor-fundo)',
+                            color: ingTipo === op.v ? '#1d4ed8' : 'var(--cor-texto-suave)',
+                          }}
+                        >
+                          {op.txt}
+                          <div style={{ fontWeight: 500, fontSize: '0.68rem', opacity: 0.85 }}>{op.hint}</div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {ingTipo === 'insumo' && (
                     <div className="campo-grupo">
                       <label>Insumo</label>
                       <div style={{ position: 'relative', marginBottom: '6px' }}>
@@ -835,6 +985,42 @@ function ProdutosComFicha() {
                       </select>
                       {insumos.length === 0 && <span className="ajuda">Cadastre insumos na aba <strong>Insumos</strong> primeiro.</span>}
                     </div>
+                    )}
+
+                    {ingTipo === 'produto' && (
+                    <div className="campo-grupo">
+                      <label>Produto de fabricação</label>
+                      <div style={{ position: 'relative', marginBottom: '6px' }}>
+                        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cor-texto-suave)', fontSize: '0.9rem', pointerEvents: 'none' }}>🔍</span>
+                        <input
+                          type="text"
+                          placeholder="Pesquisar produto..."
+                          value={buscaIng}
+                          onChange={e => setBuscaIng(e.target.value)}
+                          style={{ width: '100%', padding: '8px 10px 8px 32px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.88rem', fontFamily: 'inherit', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <select
+                        value={ingProdutoRefId}
+                        onChange={e => setIngProdutoRefId(e.target.value)}
+                        required
+                        size={Math.min(8, produtosDisponiveis.filter(p => !buscaIng || p.nome.toLowerCase().includes(buscaIng.toLowerCase())).length + 1)}
+                        style={{ width: '100%', borderRadius: '8px', border: '2px solid var(--cor-borda)', background: 'var(--cor-fundo)', color: 'var(--cor-texto)', fontSize: '0.88rem', fontFamily: 'inherit' }}
+                      >
+                        <option value="">— selecione —</option>
+                        {produtosDisponiveis
+                          .filter(p => !buscaIng || p.nome.toLowerCase().includes(buscaIng.toLowerCase()))
+                          .map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.nome} · R$ {(custoPorKgPorProduto.get(p.id) || 0).toFixed(2)}/kg
+                            </option>
+                          ))}
+                      </select>
+                      <span className="ajuda">
+                        O custo entra pelo <strong>custo/kg calculado na ficha dele</strong> — se o preço de um insumo lá mudar, esta ficha acompanha sozinha.
+                      </span>
+                    </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                       <div className="campo-grupo" style={{ marginBottom: 0 }}>
                         <label>Quantidade padrão</label>
