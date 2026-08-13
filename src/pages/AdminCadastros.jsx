@@ -118,6 +118,8 @@ function ProdutosComFicha() {
   const [fPorcao, setFPorcao]     = useState('')
   const [fMeta, setFMeta]         = useState('')
   const [fCategoria, setFCategoria] = useState('Outros')
+  const [fRendTipo, setFRendTipo] = useState('%')
+  const [fRendValor, setFRendValor] = useState('')
 
   // ficha técnica do produto selecionado
   const [ficha, setFicha]           = useState([])
@@ -210,6 +212,7 @@ function ProdutosComFicha() {
   function iniciarNovo() {
     setSelecionado(null); setModo('novo')
     setFNome(''); setFPorcao(''); setFMeta(''); setFCategoria('Outros')
+    setFRendTipo('%'); setFRendValor('')
     setFicha([]); setErro(''); setMsg('')
   }
 
@@ -219,6 +222,9 @@ function ProdutosComFicha() {
     setFPorcao(selecionado.porcao_padrao_g)
     setFMeta(selecionado.meta_rendimento)
     setFCategoria(selecionado.categoria || 'Outros')
+    const tipo = selecionado.rendimento_tipo || '%'
+    setFRendTipo(tipo)
+    setFRendValor(selecionado.rendimento_valor ?? (tipo === '%' ? (selecionado.meta_rendimento ?? '') : (selecionado.rendimento_kg ?? '')))
     setErro(''); setMsg('')
   }
 
@@ -239,10 +245,14 @@ function ProdutosComFicha() {
     setSalvando(true)
 
     if (modo === 'novo') {
+      const rVal = parseFloat(fRendValor) || null
       const { data, error } = await supabase.from('produtos').insert({
         empresa_id: empresaId, nome: fNome,
         porcao_padrao_g: parseFloat(fPorcao) || 100,
-        meta_rendimento: parseFloat(fMeta) || 70,
+        meta_rendimento: fRendTipo === '%' ? (rVal || 70) : (parseFloat(fMeta) || 70),
+        rendimento_tipo: fRendTipo,
+        rendimento_valor: rVal,
+        rendimento_kg: fRendTipo === 'kg' ? rVal : null,
         categoria: fCategoria,
       }).select().single()
       setSalvando(false)
@@ -252,17 +262,21 @@ function ProdutosComFicha() {
       setSelecionado(data); setModo('ver'); carregarFicha(data.id)
 
     } else if (modo === 'editar') {
+      const rVal = parseFloat(fRendValor) || null
       const { error } = await supabase.from('produtos').update({
         nome: fNome,
         porcao_padrao_g: parseFloat(fPorcao) || 100,
-        meta_rendimento: parseFloat(fMeta) || 70,
+        meta_rendimento: fRendTipo === '%' ? (rVal || parseFloat(fMeta) || 70) : (parseFloat(fMeta) || 70),
+        rendimento_tipo: fRendTipo,
+        rendimento_valor: rVal,
+        rendimento_kg: fRendTipo === 'kg' ? rVal : (fRendTipo === '%' ? null : null),
         categoria: fCategoria,
       }).eq('id', selecionado.id)
       setSalvando(false)
       if (error) { setErro('Erro: ' + error.message); return }
       setMsg('Produto atualizado!')
       await carregarProdutos()
-      setSelecionado(prev => ({ ...prev, nome: fNome, porcao_padrao_g: parseFloat(fPorcao), meta_rendimento: parseFloat(fMeta), categoria: fCategoria }))
+      setSelecionado(prev => ({ ...prev, nome: fNome, porcao_padrao_g: parseFloat(fPorcao), meta_rendimento: parseFloat(fMeta), rendimento_tipo: fRendTipo, rendimento_valor: rVal, rendimento_kg: fRendTipo === 'kg' ? rVal : null, categoria: fCategoria }))
       setModo('ver')
       setTimeout(() => setMsg(''), 3000)
     }
@@ -426,8 +440,17 @@ function ProdutosComFicha() {
   // Usa `rendimento_kg` quando existe (vem da ficha do DRE). Sem ele, cai no
   // comportamento antigo: peso dos ingredientes x meta_rendimento%.
   function rendimentoDe(produto, pesoIngredientes) {
-    const r = Number(produto?.rendimento_kg)
-    if (r > 0) return r
+    const tipo = produto?.rendimento_tipo || '%'
+    const val = Number(produto?.rendimento_valor)
+    if (tipo === 'kg' && val > 0) return val
+    if (tipo === 'un' && val > 0) {
+      const porcaoKg = (Number(produto?.porcao_padrao_g) || 100) / 1000
+      return val * porcaoKg
+    }
+    // tipo '%' ou fallback legacy
+    const legacyKg = Number(produto?.rendimento_kg)
+    if (tipo === '%' && val > 0) return pesoIngredientes * (val / 100)
+    if (legacyKg > 0) return legacyKg
     return pesoIngredientes * ((Number(produto?.meta_rendimento) || 100) / 100)
   }
 
@@ -635,7 +658,7 @@ function ProdutosComFicha() {
                       {p.nome}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
-                      {p.porcao_padrao_g}g · Meta {p.meta_rendimento}%
+                      {p.porcao_padrao_g}g · {p.rendimento_tipo === 'kg' ? `${p.rendimento_valor ?? p.rendimento_kg ?? '—'} kg` : p.rendimento_tipo === 'un' ? `${p.rendimento_valor ?? '—'} un` : `Meta ${p.rendimento_valor ?? p.meta_rendimento ?? '—'}%`}
                     </div>
                   </button>
                   <button onClick={e => { e.stopPropagation(); abrirDuplicar(p) }} title="Duplicar ficha" style={{
@@ -700,9 +723,22 @@ function ProdutosComFicha() {
                   <input type="number" value={fPorcao} onChange={e => setFPorcao(e.target.value)} placeholder="Ex: 180" />
                 </div>
                 <div className="campo-grupo">
-                  <label>Meta de rendimento (%)</label>
-                  <input type="number" value={fMeta} onChange={e => setFMeta(e.target.value)} placeholder="Ex: 75" />
-                  <span className="ajuda">% peso pronto / peso cru</span>
+                  <label>Rendimento final</label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <select value={fRendTipo} onChange={e => { setFRendTipo(e.target.value); setFRendValor('') }} style={{ padding: '8px 10px', border: '1px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', fontFamily: 'inherit', fontSize: '0.9rem', flexShrink: 0 }}>
+                      <option value="kg">kg</option>
+                      <option value="un">un</option>
+                      <option value="%">%</option>
+                    </select>
+                    <input type="number" value={fRendValor} onChange={e => setFRendValor(e.target.value)}
+                      placeholder={fRendTipo === 'kg' ? 'Ex: 6' : fRendTipo === 'un' ? 'Ex: 20' : 'Ex: 75'}
+                      style={{ flex: 1 }} />
+                  </div>
+                  <span className="ajuda">
+                    {fRendTipo === 'kg' && 'kg de produto pronto que a receita rende'}
+                    {fRendTipo === 'un' && 'unidades prontas que a receita rende'}
+                    {fRendTipo === '%' && '% do peso dos ingredientes que vira produto final'}
+                  </span>
                 </div>
               </div>
               <button className="btn btn-primario" type="submit" disabled={salvando} style={{ width: '100%', marginTop: '8px' }}>
@@ -722,7 +758,11 @@ function ProdutosComFicha() {
                 <div style={{ fontSize: '0.85rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
                   <span style={{ background: 'var(--cor-fundo)', padding: '2px 8px', borderRadius: '6px', marginRight: '8px' }}>{selecionado.categoria}</span>
                   Porção: <strong>{selecionado.porcao_padrao_g}g</strong> &nbsp;·&nbsp;
-                  Meta: <strong>{selecionado.meta_rendimento}%</strong>
+                  Rendimento: <strong>
+                    {selecionado.rendimento_tipo === 'kg' ? `${selecionado.rendimento_valor ?? selecionado.rendimento_kg ?? '—'} kg` :
+                     selecionado.rendimento_tipo === 'un' ? `${selecionado.rendimento_valor ?? '—'} un` :
+                     `${selecionado.rendimento_valor ?? selecionado.meta_rendimento ?? '—'}%`}
+                  </strong>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -761,8 +801,16 @@ function ProdutosComFicha() {
                       <input type="number" value={fPorcao} onChange={e => setFPorcao(e.target.value)} />
                     </div>
                     <div className="campo-grupo" style={{ marginBottom: 0 }}>
-                      <label>Meta de rendimento (%)</label>
-                      <input type="number" value={fMeta} onChange={e => setFMeta(e.target.value)} />
+                      <label>Rendimento final</label>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <select value={fRendTipo} onChange={e => { setFRendTipo(e.target.value); setFRendValor('') }} style={{ padding: '8px 10px', border: '1px solid var(--cor-borda)', borderRadius: '8px', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', fontFamily: 'inherit', fontSize: '0.9rem', flexShrink: 0 }}>
+                          <option value="kg">kg</option>
+                          <option value="un">un</option>
+                          <option value="%">%</option>
+                        </select>
+                        <input type="number" value={fRendValor} onChange={e => setFRendValor(e.target.value)}
+                          placeholder={fRendTipo === 'kg' ? 'Ex: 6' : fRendTipo === 'un' ? 'Ex: 20' : 'Ex: 75'} />
+                      </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -801,10 +849,17 @@ function ProdutosComFicha() {
                       <div style={{ fontSize: '0.72rem', color: 'var(--cor-texto-suave)' }}>{pesoTotalReceita.toFixed(3)} kg de ingredientes</div>
                     </div>
                     <div style={{ borderLeft: '1px solid var(--cor-borda)', paddingLeft: '20px' }}>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--cor-texto-suave)', textTransform: 'uppercase', fontWeight: 600 }}>Custo/kg pronto</div>
-                      <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#3b82f6' }}>R$ {custoPorKgFicha.toFixed(2)}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--cor-texto-suave)', textTransform: 'uppercase', fontWeight: 600 }}>
+                        {selecionado?.rendimento_tipo === 'un' ? 'Custo/unidade' : 'Custo/kg pronto'}
+                      </div>
+                      <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#3b82f6' }}>
+                        R$ {selecionado?.rendimento_tipo === 'un' ? custoPorcaoFicha.toFixed(2) : custoPorKgFicha.toFixed(2)}
+                      </div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--cor-texto-suave)' }}>
-                        Porção {selecionado.porcao_padrao_g}g = <strong style={{ color: '#22c55e' }}>R$ {custoPorcaoFicha.toFixed(2)}</strong>
+                        {selecionado?.rendimento_tipo === 'un'
+                          ? `${selecionado.rendimento_valor ?? '—'} unid · R$ ${custoPorKgFicha.toFixed(2)}/kg`
+                          : <>Porção {selecionado.porcao_padrao_g}g = <strong style={{ color: '#22c55e' }}>R$ {custoPorcaoFicha.toFixed(2)}</strong></>
+                        }
                       </div>
                     </div>
                   </div>
