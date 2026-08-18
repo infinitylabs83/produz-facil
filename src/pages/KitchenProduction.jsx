@@ -104,6 +104,38 @@ export default function KitchenProduction() {
   }
 
   function atualizarQtd(idx, valor) {
+    // Identifica o ingrediente de referência (maior qtd_padrao na ficha)
+    const ingRef = fichaOriginal.length > 0
+      ? fichaOriginal.reduce((max, ing) =>
+          paraKg(ing.qtd_padrao, ing.unidade) > paraKg(max.qtd_padrao, max.unidade) ? ing : max
+        , fichaOriginal[0])
+      : null
+
+    const ingAtual = ingredientes[idx]
+    const ehRef = ingRef && (
+      ingRef.insumo_id
+        ? ingRef.insumo_id === ingAtual?.insumo_id
+        : ingRef.produto_ref_id === ingAtual?.produto_ref_id
+    )
+
+    if (ehRef && fichaOriginal.length > 1) {
+      // Escala todos os outros ingredientes proporcionalmente
+      const baseKg = paraKg(ingRef.qtd_padrao, ingRef.unidade)
+      const novoKg = paraKg(valor, ingAtual.unidade)
+      if (baseKg > 0 && novoKg > 0) {
+        const fator = novoKg / baseKg
+        setIngredientes(prev => prev.map((ing, i) => {
+          if (i === idx) return { ...ing, quantidade: valor }
+          const orig = fichaOriginal.find(o =>
+            o.insumo_id ? o.insumo_id === ing.insumo_id : o.produto_ref_id === ing.produto_ref_id
+          )
+          if (!orig || !orig.qtd_padrao) return ing
+          return { ...ing, quantidade: (orig.qtd_padrao * fator).toFixed(3) }
+        }))
+        return
+      }
+    }
+
     setIngredientes(prev => prev.map((ing, i) => i === idx ? { ...ing, quantidade: valor } : ing))
   }
 

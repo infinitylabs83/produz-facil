@@ -510,7 +510,41 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '20px' }}>
-                {ingredientes.map((ing, i) => (
+                {(() => {
+                  // ingrediente de referência = maior qtd_padrao da ficha
+                  const ingRef = fichaOriginal.length > 0
+                    ? fichaOriginal.reduce((max, ing) =>
+                        paraKgGateway(ing.qtd_padrao, ing.unidade) > paraKgGateway(max.qtd_padrao, max.unidade) ? ing : max
+                      , fichaOriginal[0])
+                    : null
+
+                  function atualizarIngrediente(idx, valor) {
+                    const ingAtual = ingredientes[idx]
+                    const ehRef = ingRef && (
+                      ingRef.insumo_id
+                        ? ingRef.insumo_id === ingAtual?.insumo_id
+                        : ingRef.produto_ref_id === ingAtual?.produto_ref_id
+                    )
+                    if (ehRef && fichaOriginal.length > 1) {
+                      const baseKg = paraKgGateway(ingRef.qtd_padrao, ingRef.unidade)
+                      const novoKg = paraKgGateway(valor, ingAtual.unidade)
+                      if (baseKg > 0 && novoKg > 0) {
+                        const fator = novoKg / baseKg
+                        setIngredientes(prev => prev.map((ing, i) => {
+                          if (i === idx) return { ...ing, quantidade: valor }
+                          const orig = fichaOriginal.find(o =>
+                            o.insumo_id ? o.insumo_id === ing.insumo_id : o.produto_ref_id === ing.produto_ref_id
+                          )
+                          if (!orig || !orig.qtd_padrao) return ing
+                          return { ...ing, quantidade: (orig.qtd_padrao * fator).toFixed(3) }
+                        }))
+                        return
+                      }
+                    }
+                    setIngredientes(prev => prev.map((ing, i) => i === idx ? { ...ing, quantidade: valor } : ing))
+                  }
+
+                  return ingredientes.map((ing, i) => (
                   <div key={i}>
                     <label style={{ display: 'block', fontWeight: 700, fontSize: '1rem', marginBottom: '6px' }}>
                       {ing.nome}
@@ -519,11 +553,7 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
                       <input
                         type="number" inputMode="decimal" placeholder="0"
                         value={ing.quantidade}
-                        onChange={e => {
-                          const novo = [...ingredientes]
-                          novo[i] = { ...novo[i], quantidade: e.target.value }
-                          setIngredientes(novo)
-                        }}
+                        onChange={e => atualizarIngrediente(i, e.target.value)}
                         style={{ ...S.input, flex: 1, fontSize: '1.2rem', textAlign: 'center' }}
                         onFocus={e => e.target.style.borderColor = '#f97316'}
                         onBlur={e => e.target.style.borderColor = '#334155'}
@@ -543,7 +573,8 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
                       </select>
                     </div>
                   </div>
-                ))}
+                  ))
+                })()}
               </div>
             )}
 
