@@ -222,7 +222,7 @@ export default function KitchenProduction() {
   // Mostra apenas itens FAB (fabricação própria) + busca para outros
   const produtosFab = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
   const resultadoBusca = buscaProd.trim().length >= 1
-    ? produtos.filter(p => p.nome.toLowerCase().includes(buscaProd.toLowerCase()))
+    ? produtosFab.filter(p => p.nome.toLowerCase().includes(buscaProd.toLowerCase()))
     : []
 
   return (
