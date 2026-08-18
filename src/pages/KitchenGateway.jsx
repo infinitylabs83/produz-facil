@@ -174,64 +174,34 @@ function TelaFuncionario({ sessao, onSelecionar }) {
 // ── Seletor de produto (etapa 0) ─────────────────────────────────────────────
 function EtapaProduto({ produtos, fornecedores, produtoId, fornecedorId, setFornecedorId, onSelecionar, onAvancar }) {
   const [busca, setBusca] = useState('')
+  const [listaAberta, setListaAberta] = useState(false)
 
-  const fab  = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
-  const outros = produtos.filter(p => !p.nome.toUpperCase().includes('FAB'))
+  const fab = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
 
+  // busca apenas dentro dos itens FAB
   const resultadoBusca = busca.trim().length >= 1
-    ? produtos.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()))
+    ? fab.filter(p => p.nome.toLowerCase().includes(busca.toLowerCase()))
     : []
 
-  const produtoSel = produtos.find(p => p.id === produtoId)
+  const produtoSel = fab.find(p => p.id === produtoId)
 
   return (
     <div style={{ ...S.card, padding: '24px' }}>
       <div style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '6px' }}>🏭 O que você está produzindo?</div>
-      <div style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: '20px' }}>Toque no item ou pesquise pelo nome</div>
+      <div style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: '20px' }}>Pesquise ou selecione o item de fabricação</div>
 
-      {/* Itens FAB — botões grandes de toque */}
-      {fab.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#f97316', marginBottom: '10px' }}>
-            🏭 Fabricação própria
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {fab.map(p => (
-              <button key={p.id} onClick={() => onSelecionar(p.id)} style={{
-                padding: '16px 18px', border: `2px solid ${produtoId === p.id ? '#f97316' : '#334155'}`,
-                borderRadius: '12px', background: produtoId === p.id ? 'rgba(249,115,22,0.12)' : '#0f172a',
-                color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
-                fontFamily: 'inherit', textAlign: 'left', transition: 'all 0.15s',
-                boxShadow: produtoId === p.id ? '0 0 0 1px #f97316' : 'none',
-              }}>
-                <div>{p.nome.replace(/ ?- ?FAB/i, '')}</div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px', fontWeight: 400 }}>
-                  Meta: {p.meta_rendimento}% · Porção: {p.porcao_padrao_g}g
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Campo de pesquisa para outros itens */}
-      <div style={{ borderTop: '1px solid #1e293b', paddingTop: '16px', marginBottom: '16px' }}>
-        <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#475569', marginBottom: '10px' }}>
-          🔍 Buscar outro item
-        </div>
-        <div style={{ position: 'relative' }}>
-          <input
-            value={busca}
-            onChange={e => setBusca(e.target.value)}
-            placeholder="Digite o nome do produto..."
-            style={{ ...S.input, paddingLeft: '14px', fontSize: '1rem' }}
-            onFocus={e => e.target.style.borderColor = '#f97316'}
-            onBlur={e => e.target.style.borderColor = '#334155'}
-          />
-        </div>
-
+      {/* Campo de busca no TOPO */}
+      <div style={{ marginBottom: '16px' }}>
+        <input
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          placeholder="🔍 Buscar produto de fabricação..."
+          style={{ ...S.input, fontSize: '1rem' }}
+          onFocus={e => e.target.style.borderColor = '#f97316'}
+          onBlur={e => e.target.style.borderColor = '#334155'}
+        />
         {busca.trim().length >= 1 && (
-          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto' }}>
+          <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '260px', overflowY: 'auto' }}>
             {resultadoBusca.length === 0 ? (
               <div style={{ color: '#475569', fontSize: '0.85rem', textAlign: 'center', padding: '12px' }}>Nenhum produto encontrado</div>
             ) : resultadoBusca.map(p => (
@@ -241,22 +211,61 @@ function EtapaProduto({ produtos, fornecedores, produtoId, fornecedorId, setForn
                 color: '#f1f5f9', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer',
                 fontFamily: 'inherit', textAlign: 'left',
               }}>
-                {p.nome}
+                {p.nome.replace(/ ?- ?FAB/i, '')}
                 <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px', fontWeight: 400 }}>
-                  Meta: {p.meta_rendimento}% · Porção: {p.porcao_padrao_g}g
+                  Meta: {p.meta_rendimento}%
                 </div>
               </button>
             ))}
           </div>
         )}
-
-        {/* Mostra item selecionado via busca (fora dos FAB) */}
-        {produtoId && !fab.find(p => p.id === produtoId) && !busca && (
-          <div style={{ marginTop: '10px', padding: '12px 16px', border: '2px solid #f97316', borderRadius: '10px', background: 'rgba(249,115,22,0.08)', color: '#f97316', fontWeight: 700, fontSize: '0.95rem' }}>
-            ✓ {produtoSel?.nome}
-          </div>
-        )}
       </div>
+
+      {/* Item selecionado */}
+      {produtoSel && !busca && (
+        <div style={{ marginBottom: '16px', padding: '12px 16px', border: '2px solid #f97316', borderRadius: '10px', background: 'rgba(249,115,22,0.08)', color: '#f97316', fontWeight: 700 }}>
+          ✓ {produtoSel.nome.replace(/ ?- ?FAB/i, '')}
+        </div>
+      )}
+
+      {/* Lista FAB colapsada */}
+      {fab.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={() => setListaAberta(v => !v)}
+            style={{
+              width: '100%', padding: '12px 16px',
+              border: '2px solid #334155', borderRadius: '10px',
+              background: '#0f172a', color: '#94a3b8',
+              fontWeight: 700, fontSize: '0.9rem',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}
+          >
+            <span>🏭 Ver todos os itens ({fab.length})</span>
+            <span style={{ fontSize: '0.75rem' }}>{listaAberta ? '▲ Recolher' : '▼ Expandir'}</span>
+          </button>
+
+          {listaAberta && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              {fab.map(p => (
+                <button key={p.id} onClick={() => { onSelecionar(p.id); setListaAberta(false) }} style={{
+                  padding: '16px 18px', border: `2px solid ${produtoId === p.id ? '#f97316' : '#334155'}`,
+                  borderRadius: '12px', background: produtoId === p.id ? 'rgba(249,115,22,0.12)' : '#0f172a',
+                  color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
+                  fontFamily: 'inherit', textAlign: 'left',
+                  boxShadow: produtoId === p.id ? '0 0 0 1px #f97316' : 'none',
+                }}>
+                  <div>{p.nome.replace(/ ?- ?FAB/i, '')}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '3px', fontWeight: 400 }}>
+                    Meta: {p.meta_rendimento}%
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Fornecedor */}
       {fornecedores.length > 0 && (
@@ -276,6 +285,13 @@ function EtapaProduto({ produtos, fornecedores, produtoId, fornecedorId, setForn
   )
 }
 
+// ── helpers de escalonamento ──────────────────────────────────────────────────
+function paraKgGateway(qtd, unidade) {
+  const v = Number(qtd) || 0
+  if (unidade === 'g' || unidade === 'ml') return v / 1000
+  return v
+}
+
 // ── Produção (wizard simplificado para cozinha) ───────────────────────────────
 function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
   const [etapa, setEtapa]         = useState(0) // 0=produto 1=pesos 2=ingredientes
@@ -287,6 +303,7 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
   const [pesoLimpeza, setPesoLimpeza] = useState('')
   const [pesoPronto, setPesoPronto]   = useState('')
   const [ingredientes, setIngredientes] = useState([])
+  const [fichaOriginal, setFichaOriginal] = useState([])
   const [produtoSel, setProdutoSel]    = useState(null)
   const [salvando, setSalvando]        = useState(false)
   const [erro, setErro]                = useState('')
@@ -302,19 +319,46 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
     carregar()
   }, [sessao.empresa_id])
 
+  function calcularEscala(pesoCruAtual) {
+    const val = parseFloat(pesoCruAtual)
+    if (!val || fichaOriginal.length === 0) return
+    const ingRef = fichaOriginal.reduce((max, ing) =>
+      paraKgGateway(ing.qtd_padrao, ing.unidade) > paraKgGateway(max.qtd_padrao, max.unidade) ? ing : max
+    , fichaOriginal[0])
+    const baseKg = paraKgGateway(ingRef.qtd_padrao, ingRef.unidade)
+    if (!baseKg) return
+    const fator = val / baseKg
+    setIngredientes(prev => prev.map(ing => {
+      const orig = fichaOriginal.find(o =>
+        o.insumo_id ? o.insumo_id === ing.insumo_id : o.produto_ref_id === ing.produto_ref_id
+      )
+      if (!orig || !orig.qtd_padrao) return ing
+      return { ...ing, quantidade: (orig.qtd_padrao * fator).toFixed(3) }
+    }))
+  }
+
   async function selecionarProduto(pid) {
     setProdutoId(pid)
     const prod = produtos.find(p => p.id === pid)
     setProdutoSel(prod)
     const { data: ing } = await supabase
       .from('produto_ingredientes')
-      .select('*, insumos(nome, preco_por_kg)')
+      .select('*, insumos(id, nome, preco_por_kg, unidade_padrao), produto_ref:produtos!produto_ref_id(id, nome)')
       .eq('produto_id', pid)
-    setIngredientes((ing || []).map(i => ({
-      id: i.id, insumo_id: i.insumo_id,
-      nome: i.insumos?.nome || '', preco_por_kg: i.insumos?.preco_por_kg || 0,
-      quantidade: '', unidade: i.unidade_uso || 'kg',
-    })))
+    const ings = (ing || [])
+      .filter(i => i.insumos || i.produto_ref)
+      .map(i => ({
+        id: i.id,
+        insumo_id: i.insumo_id,
+        produto_ref_id: i.produto_ref_id,
+        nome: i.insumos ? i.insumos.nome : (i.produto_ref?.nome?.replace(/ ?- ?FAB/i, '') + ' (fab)'),
+        preco_por_kg: i.insumos?.preco_por_kg || 0,
+        quantidade: '',
+        qtd_padrao: i.quantidade_padrao || 0,
+        unidade: i.unidade_uso || i.insumos?.unidade_padrao || 'kg',
+      }))
+    setIngredientes(ings)
+    setFichaOriginal(ings)
   }
 
   async function salvar() {
@@ -433,7 +477,7 @@ function TelaProducao({ sessao, funcionario, onVoltar, onConcluido }) {
             <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '24px' }}>{produtoSel?.nome}</div>
 
             {[
-              { label: '🥩 Peso cru (kg)', val: pesoCru, set: setPesoCru, desc: 'Antes de limpar' },
+              { label: '🥩 Peso cru (kg)', val: pesoCru, set: v => { setPesoCru(v); calcularEscala(v) }, desc: 'Antes de limpar' },
               { label: '🔪 Após limpeza (kg)', val: pesoLimpeza, set: setPesoLimpeza, desc: 'Depois de limpar e aparar' },
               { label: '✅ Peso final pronto (kg)', val: pesoPronto, set: setPesoPronto, desc: 'Pronto para servir' },
             ].map((c, i) => (
