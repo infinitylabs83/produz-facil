@@ -59,6 +59,7 @@ export default function KitchenProduction() {
   const [fichaOriginal, setFichaOriginal] = useState([]) // quantidades padrão da ficha
 
   const [buscaProd, setBuscaProd] = useState('')
+  const [listaAberta, setListaAberta] = useState(false)
 
   // Para sugestão de novo fornecedor
   const [sugerindoFornecedor, setSugerindoFornecedor] = useState(false)
@@ -235,68 +236,87 @@ export default function KitchenProduction() {
       {etapa === 0 && (
         <div className="card">
           <h2 className="wizard-titulo" style={{ fontSize: '1.3rem' }}>O que você vai produzir?</h2>
-          <p className="wizard-subtitulo">Selecione o item ou pesquise pelo nome.</p>
+          <p className="wizard-subtitulo">Digite o nome para buscar ou abra a lista completa.</p>
 
-          {/* Seletor de itens FAB — grande para toque fácil */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '10px' }}>
-              🏭 Fabricação Própria
-            </label>
-            <select
-              value={produtoId}
-              onChange={e => {
-                const p = produtosFab.find(x => x.id === e.target.value)
-                if (p) aoSelecionarProduto(p)
-                else { setProdutoId(''); setProdutoSelecionado(null); setIngredientes([]) }
-              }}
-              style={{
-                width: '100%', padding: '18px 16px', fontSize: '1.1rem', fontWeight: 600,
-                borderRadius: '12px', border: '2px solid var(--cor-borda)',
-                background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)',
-                appearance: 'none', WebkitAppearance: 'none',
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23888\' stroke-width=\'2\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")',
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
-                paddingRight: '44px', cursor: 'pointer',
-              }}
-            >
-              <option value="">— Toque para selecionar —</option>
-              {produtosFab.map(p => (
-                <option key={p.id} value={p.id}>{p.nome.replace(/ ?- ?FAB/i, '')}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Busca para outros produtos */}
-          <div style={{ borderTop: '1px solid var(--cor-borda)', paddingTop: '16px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--cor-texto-suave)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '10px' }}>
-              🔍 Buscar outro produto
-            </label>
+          {/* 1. BUSCA — sempre no topo */}
+          <div style={{ position: 'relative', marginBottom: '16px' }}>
+            <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2rem', pointerEvents: 'none' }}>🔍</span>
             <input
               type="text"
-              placeholder="Digite o nome..."
+              placeholder="Digite o nome do item..."
               value={buscaProd}
-              onChange={e => { setBuscaProd(e.target.value); setProdutoId(''); setProdutoSelecionado(null) }}
+              onChange={e => { setBuscaProd(e.target.value); setProdutoId(''); setProdutoSelecionado(null); setListaAberta(false) }}
               style={{
-                width: '100%', padding: '18px 16px', fontSize: '1.1rem',
-                borderRadius: '12px', border: '2px solid var(--cor-borda)',
+                width: '100%', padding: '18px 16px 18px 48px', fontSize: '1.1rem',
+                borderRadius: '12px', border: '2px solid var(--cor-primaria)',
                 background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)',
-                boxSizing: 'border-box',
+                boxSizing: 'border-box', outline: 'none', fontWeight: 600,
               }}
             />
-            {resultadoBusca.length > 0 && (
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto' }}>
-                {resultadoBusca.map(p => (
-                  <button key={p.id} onClick={() => { aoSelecionarProduto(p); setBuscaProd('') }} style={{
-                    padding: '16px 18px', borderRadius: '10px', border: '2px solid var(--cor-borda)',
-                    background: 'var(--cor-fundo-card)', cursor: 'pointer', textAlign: 'left',
-                    fontSize: '1rem', fontWeight: 600, color: 'var(--cor-texto)',
-                  }}>
-                    {p.nome}
-                  </button>
-                ))}
-              </div>
+            {buscaProd && (
+              <button onClick={() => { setBuscaProd(''); setProdutoId(''); setProdutoSelecionado(null) }}
+                style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: 'var(--cor-texto-suave)', lineHeight: 1 }}>
+                ✕
+              </button>
             )}
           </div>
+
+          {/* Resultados da busca */}
+          {buscaProd.trim().length >= 1 && (
+            <div style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {resultadoBusca.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cor-texto-suave)', fontSize: '0.95rem', background: 'var(--cor-fundo)', borderRadius: '10px' }}>
+                  Nenhum item encontrado para "{buscaProd}"
+                </div>
+              ) : resultadoBusca.map(p => (
+                <button key={p.id} onClick={() => { aoSelecionarProduto(p); setBuscaProd('') }} style={{
+                  padding: '16px 18px', borderRadius: '12px', border: '2px solid var(--cor-borda)',
+                  background: 'var(--cor-fundo-card)', cursor: 'pointer', textAlign: 'left',
+                  fontSize: '1rem', fontWeight: 700, color: 'var(--cor-texto)',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                }}>
+                  <span style={{ fontSize: '1.4rem' }}>{EMOJI_PRODUTO[p.categoria] || '🍳'}</span>
+                  {p.nome.replace(/ ?- ?FAB/i, '')}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* 2. LISTA RECOLHIDA — botão para expandir */}
+          {!buscaProd.trim() && (
+            <div>
+              <button
+                onClick={() => setListaAberta(v => !v)}
+                style={{
+                  width: '100%', padding: '16px 18px', borderRadius: '12px',
+                  border: '2px solid var(--cor-borda)', background: 'var(--cor-fundo-card)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  fontSize: '1rem', fontWeight: 700, color: 'var(--cor-texto)',
+                }}
+              >
+                <span>🏭 Ver todos os itens disponíveis ({produtosFab.length})</span>
+                <span style={{ fontSize: '1.2rem', transition: 'transform 0.2s', display: 'inline-block', transform: listaAberta ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+              </button>
+
+              {listaAberta && (
+                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto', paddingRight: '2px' }}>
+                  {produtosFab.map(p => (
+                    <button key={p.id} onClick={() => { aoSelecionarProduto(p); setListaAberta(false) }} style={{
+                      padding: '16px 18px', borderRadius: '12px',
+                      border: produtoId === p.id ? '2px solid var(--cor-primaria)' : '2px solid var(--cor-borda)',
+                      background: produtoId === p.id ? 'rgba(249,115,22,0.08)' : 'var(--cor-fundo-card)',
+                      cursor: 'pointer', textAlign: 'left', fontSize: '1rem', fontWeight: 700,
+                      color: produtoId === p.id ? 'var(--cor-primaria)' : 'var(--cor-texto)',
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                    }}>
+                      <span style={{ fontSize: '1.4rem' }}>{EMOJI_PRODUTO[p.categoria] || '🍳'}</span>
+                      {p.nome.replace(/ ?- ?FAB/i, '')}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Produto selecionado (confirmação visual) */}
           {produtoSelecionado && (
