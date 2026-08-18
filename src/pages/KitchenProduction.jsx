@@ -85,19 +85,22 @@ export default function KitchenProduction() {
     setProdutoSelecionado(p)
     const { data } = await supabase
       .from('produto_ingredientes')
-      .select('*, insumos(id, nome, preco_por_kg, unidade_padrao)')
+      .select('*, insumos(id, nome, preco_por_kg, unidade_padrao), produto_ref:produtos!produto_ref_id(id, nome)')
       .eq('produto_id', p.id)
-    const ings = (data || []).map(pi => ({
-      insumo_id: pi.insumo_id,
-      nome: pi.insumos.nome,
-      preco_por_kg: pi.insumos.preco_por_kg,
-      unidade: pi.unidade_uso || pi.insumos.unidade_padrao,
-      quantidade: '',
-      qtd_padrao: pi.quantidade_padrao || 0, // guarda o padrão para escala
-      padrao: true,
-    }))
+    const ings = (data || [])
+      .filter(pi => pi.insumos || pi.produto_ref) // ignora linhas corrompidas
+      .map(pi => ({
+        insumo_id: pi.insumo_id,
+        produto_ref_id: pi.produto_ref_id,
+        nome: pi.insumos ? pi.insumos.nome : (pi.produto_ref?.nome?.replace(/ ?- ?FAB/i, '') + ' (fab)'),
+        preco_por_kg: pi.insumos?.preco_por_kg || 0,
+        unidade: pi.unidade_uso || pi.insumos?.unidade_padrao || 'kg',
+        quantidade: '',
+        qtd_padrao: pi.quantidade_padrao || 0,
+        padrao: true,
+      }))
     setIngredientes(ings)
-    setFichaOriginal(ings) // salva cópia das quantidades originais
+    setFichaOriginal(ings)
   }
 
   function atualizarQtd(idx, valor) {
@@ -108,26 +111,34 @@ export default function KitchenProduction() {
     setIngredientes(prev => prev.filter((_, i) => i !== idx))
   }
 
-  // Calcula escala com base no peso cru informado
-  // O ingrediente de maior peso na ficha é usado como referência
+  // Converte qualquer quantidade para kg (referência de comparação)
+  function paraKg(qtd, unidade) {
+    const v = Number(qtd) || 0
+    if (unidade === 'g')  return v / 1000
+    if (unidade === 'ml') return v / 1000
+    return v // kg, L, un — usa valor direto
+  }
+
+  // Quando o operador digita o peso cru do ingrediente principal (maior da ficha),
+  // todos os outros ingredientes são recalculados proporcionalmente.
   function calcularEscala(pesoCruAtual) {
     const val = parseFloat(pesoCruAtual)
     if (!val || fichaOriginal.length === 0) return
 
-    // Encontra ingrediente de maior quantidade em kg
-    const ingRef = fichaOriginal.reduce((max, ing) => {
-      const qKg = ing.unidade === 'g' ? (ing.qtd_padrao || 0) / 1000 : (ing.qtd_padrao || 0)
-      const maxKg = max.unidade === 'g' ? (max.qtd_padrao || 0) / 1000 : (max.qtd_padrao || 0)
-      return qKg > maxKg ? ing : max
-    }, fichaOriginal[0])
+    // Ingrediente de maior quantidade em kg = o ingrediente principal da ficha
+    const ingRef = fichaOriginal.reduce((max, ing) =>
+      paraKg(ing.qtd_padrao, ing.unidade) > paraKg(max.qtd_padrao, max.unidade) ? ing : max
+    , fichaOriginal[0])
 
-    const baseKg = ingRef.unidade === 'g' ? (ingRef.qtd_padrao || 0) / 1000 : (ingRef.qtd_padrao || 0)
+    const baseKg = paraKg(ingRef.qtd_padrao, ingRef.unidade)
     if (!baseKg) return
 
     const fator = val / baseKg
 
     setIngredientes(prev => prev.map(ing => {
-      const orig = fichaOriginal.find(o => o.insumo_id === ing.insumo_id)
+      const orig = fichaOriginal.find(o =>
+        o.insumo_id ? o.insumo_id === ing.insumo_id : o.produto_ref_id === ing.produto_ref_id
+      )
       if (!orig || !orig.qtd_padrao) return ing
       const novaQtd = (orig.qtd_padrao * fator).toFixed(3)
       return { ...ing, quantidade: novaQtd }
