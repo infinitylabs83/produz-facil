@@ -281,9 +281,18 @@ export default function AdminDashboard() {
 
   // ─── Gráfico 3 ───
   const precoInsumoAtual = insumos.find(i => i.id === insumoSelecionado)
-  const historicoInsumo = historicoPrecos
+  const histFiltrado = historicoPrecos
     .filter(h => h.insumo_id === insumoSelecionado)
-    .map(h => ({ data: new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), 'Preço R$/kg': parseFloat((h.preco_novo || 0).toFixed(2)) }))
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) // mais antigo primeiro
+  const fmtData = d => new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  const historicoInsumo = []
+  // inclui preco_anterior do primeiro registro como ponto de partida
+  if (histFiltrado.length > 0) {
+    historicoInsumo.push({ data: fmtData(histFiltrado[0].created_at), 'Preço R$/kg': parseFloat((histFiltrado[0].preco_anterior || 0).toFixed(2)) })
+  }
+  histFiltrado.forEach(h => {
+    historicoInsumo.push({ data: fmtData(h.created_at), 'Preço R$/kg': parseFloat((h.preco_novo || 0).toFixed(2)) })
+  })
   if (precoInsumoAtual) {
     historicoInsumo.push({ data: 'Atual', 'Preço R$/kg': parseFloat(precoInsumoAtual.preco_por_kg.toFixed(2)) })
   }
