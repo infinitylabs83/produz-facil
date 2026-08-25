@@ -136,6 +136,11 @@ export default function AdminDashboard() {
   const [buscaProduto, setBuscaProduto] = useState('')
   const [listaProdAberta, setListaProdAberta] = useState(false)
 
+  function selecionarProduto(id) {
+    setProdutoSelecionado(id)
+    sessionStorage.setItem('dashboard_produto', id)
+  }
+
   useEffect(() => { carregar() }, [])
 
   async function carregar() {
@@ -154,8 +159,10 @@ export default function AdminDashboard() {
     setHistoricoPrecos(precs || [])
     setProducoes(prod || [])
     setFornPendentes((forn || []).filter(f => f.aprovado === false))
-    // Seletor de detalhe começa no primeiro FAB
-    if (fab.length) setProdutoSelecionado(fab[0].id)
+    // Restaura produto selecionado da sessão anterior ou usa o primeiro FAB
+    const salvo = sessionStorage.getItem('dashboard_produto')
+    const existe = fab.find(p => p.id === salvo)
+    setProdutoSelecionado(existe ? salvo : (fab[0]?.id || ''))
     else if (prods?.length) setProdutoSelecionado(prods[0].id)
     if (ins?.length) setInsumoSelecionado(ins[0].id)
     setCarregando(false)
@@ -407,7 +414,7 @@ export default function AdminDashboard() {
                       <div style={{ padding: '16px', textAlign: 'center', color: 'var(--cor-texto-suave)', fontSize: '0.9rem' }}>Nenhum produto encontrado</div>
                     ) : produtosFiltrados.map(p => (
                       <div key={p.id}
-                        onClick={() => { setProdutoSelecionado(p.id); setListaProdAberta(false); setBuscaProduto('') }}
+                        onClick={() => { selecionarProduto(p.id); setListaProdAberta(false); setBuscaProduto('') }}
                         style={{ padding: '14px 16px', cursor: 'pointer', fontWeight: p.id === produtoSelecionado ? 700 : 500, fontSize: '0.95rem', color: p.id === produtoSelecionado ? 'var(--cor-primaria)' : 'var(--cor-texto)', background: p.id === produtoSelecionado ? 'rgba(249,115,22,0.08)' : 'transparent', borderBottom: '1px solid var(--cor-borda)', transition: 'background 0.1s' }}
                         onMouseEnter={e => { if (p.id !== produtoSelecionado) e.currentTarget.style.background = 'var(--cor-fundo)' }}
                         onMouseLeave={e => { if (p.id !== produtoSelecionado) e.currentTarget.style.background = 'transparent' }}
