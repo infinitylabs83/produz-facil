@@ -133,6 +133,8 @@ export default function AdminDashboard() {
   const [produtoSelecionado, setProdutoSelecionado] = useState('')
   const [insumoSelecionado, setInsumoSelecionado]   = useState('')
   const [buscaInsumo, setBuscaInsumo] = useState('')
+  const [buscaProduto, setBuscaProduto] = useState('')
+  const [listaProdAberta, setListaProdAberta] = useState(false)
 
   useEffect(() => { carregar() }, [])
 
@@ -368,23 +370,57 @@ export default function AdminDashboard() {
       {/* ══════════════════════════════════════════
           KPIs FILTRADOS POR PRODUTO
       ══════════════════════════════════════════ */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <div style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--cor-texto-suave)' }}>
-          Detalhe por produto
+      {/* ── Cabeçalho detalhe + busca de produto ── */}
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cor-texto-suave)', marginBottom: '10px' }}>
+          Detalhe por produto de fabricação
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--cor-texto-suave)', fontWeight: 600 }}>Produto:</span>
-          <select value={produtoSelecionado} onChange={e => setProdutoSelecionado(e.target.value)} className="select-padrao">
-            {produtos
-              .filter(p => p.nome.toUpperCase().includes('FAB'))
-              .map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.nome.replace(/ ?- ?FAB/i, '')}
-                </option>
-              ))
-            }
-          </select>
-        </div>
+        {(() => {
+          const produtosFab = produtos.filter(p => p.nome.toUpperCase().includes('FAB'))
+          const produtosFiltrados = buscaProduto.trim()
+            ? produtosFab.filter(p => p.nome.toLowerCase().includes(buscaProduto.toLowerCase()))
+            : produtosFab
+          const nomeSelecionado = produtosFab.find(p => p.id === produtoSelecionado)?.nome?.replace(/ ?- ?FAB/i, '') || ''
+          return (
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--cor-fundo-card)', border: '2px solid var(--cor-borda)', borderRadius: '12px', padding: '12px 16px' }}
+                onClick={() => setListaProdAberta(v => !v)}>
+                <span style={{ fontSize: '1.1rem' }}>🏭</span>
+                <span style={{ flex: 1, fontWeight: 700, fontSize: '1rem', color: 'var(--cor-texto)' }}>
+                  {nomeSelecionado || 'Selecione um produto'}
+                </span>
+                <span style={{ color: 'var(--cor-texto-suave)', fontSize: '0.8rem' }}>{listaProdAberta ? '▲' : '▼'}</span>
+              </div>
+              {listaProdAberta && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: 'var(--cor-fundo-card)', border: '2px solid var(--cor-primaria)', borderRadius: '12px', marginTop: '4px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                  <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--cor-borda)' }}>
+                    <input
+                      autoFocus
+                      value={buscaProduto}
+                      onChange={e => setBuscaProduto(e.target.value)}
+                      placeholder="🔍 Buscar produto..."
+                      style={{ width: '100%', background: 'var(--cor-fundo)', border: '1px solid var(--cor-borda)', borderRadius: '8px', padding: '10px 12px', color: 'var(--cor-texto)', fontSize: '0.95rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
+                    {produtosFiltrados.length === 0 ? (
+                      <div style={{ padding: '16px', textAlign: 'center', color: 'var(--cor-texto-suave)', fontSize: '0.9rem' }}>Nenhum produto encontrado</div>
+                    ) : produtosFiltrados.map(p => (
+                      <div key={p.id}
+                        onClick={() => { setProdutoSelecionado(p.id); setListaProdAberta(false); setBuscaProduto('') }}
+                        style={{ padding: '14px 16px', cursor: 'pointer', fontWeight: p.id === produtoSelecionado ? 700 : 500, fontSize: '0.95rem', color: p.id === produtoSelecionado ? 'var(--cor-primaria)' : 'var(--cor-texto)', background: p.id === produtoSelecionado ? 'rgba(249,115,22,0.08)' : 'transparent', borderBottom: '1px solid var(--cor-borda)', transition: 'background 0.1s' }}
+                        onMouseEnter={e => { if (p.id !== produtoSelecionado) e.currentTarget.style.background = 'var(--cor-fundo)' }}
+                        onMouseLeave={e => { if (p.id !== produtoSelecionado) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        {p.nome.replace(/ ?- ?FAB/i, '')}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </div>
 
       <div className="grid-metricas" style={{ marginBottom: '20px' }}>
@@ -447,29 +483,72 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Gráfico 1 */}
+      {/* Gráfico 1 — só Custo/kg */}
       <div className="card" style={{ marginBottom: '20px' }}>
-        <div style={{ marginBottom: '16px' }}>
-          <div className="card-titulo">Evolução de custos e rendimento — {nomeProdutoSelecionado}</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>
-            últimas 20 produções — 🟣 Custo/kg (hover mostra valor da porção) &nbsp;|&nbsp; 🔵 Rendimento
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--cor-texto)', marginBottom: '4px' }}>
+            Evolução do Custo/kg — {nomeProdutoSelecionado}
+          </div>
+          <div style={{ fontSize: '0.82rem', color: 'var(--cor-texto-suave)' }}>
+            Últimas 20 produções registradas
           </div>
         </div>
+
         {producoesProduto.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--cor-texto-suave)' }}>Nenhuma produção para este produto.</div>
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--cor-texto-suave)', fontSize: '0.95rem' }}>
+            Nenhuma produção registrada para este produto.
+          </div>
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={producoesProduto} margin={{ top: 12, right: 24, bottom: 0, left: 8 }}>
-              <CartesianGrid stroke="var(--cor-borda)" strokeOpacity={0.4} vertical={false} />
-              <XAxis dataKey="data" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="custo" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="rend" orientation="right" tick={{ fontSize: 11, fill: '#3b82f6' }} domain={[0, 100]} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
-              <Tooltip content={<TooltipGrafico />} />
-              <Legend wrapperStyle={{ fontSize: '0.85rem', paddingTop: '12px' }} />
-              <Line yAxisId="custo" type="monotone" dataKey="Custo/kg R$"  stroke="#a855f7" strokeWidth={2.5} dot={{ r: 4, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
-              <Line yAxisId="rend"  type="monotone" dataKey="Rendimento %" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
-            </LineChart>
-          </ResponsiveContainer>
+          <>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={producoesProduto} margin={{ top: 8, right: 20, bottom: 0, left: 8 }}>
+                <CartesianGrid stroke="var(--cor-borda)" strokeOpacity={0.35} vertical={false} />
+                <XAxis dataKey="data" tick={{ fontSize: 12, fill: 'var(--cor-texto-suave)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} axisLine={false} tickLine={false} />
+                <Tooltip content={<TooltipGrafico />} />
+                <Line type="monotone" dataKey="Custo/kg R$" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
+              </LineChart>
+            </ResponsiveContainer>
+
+            {/* Resumo por extenso abaixo do gráfico */}
+            {(() => {
+              const ultima = producoesDoProduto[0]
+              const rendMedio = producoesDoProduto.length > 0
+                ? (producoesDoProduto.reduce((acc, p) => acc + (p.rendimento || 0), 0) / producoesDoProduto.length)
+                : null
+              const rendUltimo = ultima?.rendimento
+              const custoKgUltimo = ultima?.custo_por_kg_pronto
+              if (!ultima) return null
+              return (
+                <div style={{ marginTop: '20px', padding: '16px 20px', background: 'var(--cor-fundo)', borderRadius: '12px', borderLeft: '4px solid #a855f7' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
+                    {rendMedio !== null && (
+                      <div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Rendimento médio</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--cor-texto)' }}>{rendMedio.toFixed(1)}%</div>
+                      </div>
+                    )}
+                    {rendUltimo !== undefined && (
+                      <div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Última produção</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: rendUltimo >= metaDoProduto ? 'var(--cor-sucesso)' : 'var(--cor-perigo)' }}>{Number(rendUltimo).toFixed(1)}%</div>
+                      </div>
+                    )}
+                    {custoKgUltimo !== undefined && (
+                      <div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Custo/kg última produção</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#a855f7' }}>R$ {Number(custoKgUltimo).toFixed(2)}</div>
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Meta da ficha</div>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--cor-texto-suave)' }}>{metaDoProduto}%</div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </>
         )}
       </div>
 
