@@ -730,8 +730,8 @@ function ProdutosComFicha() {
                       <option value="un">un</option>
                       <option value="%">%</option>
                     </select>
-                    <input type="number" value={fRendValor} onChange={e => setFRendValor(e.target.value)}
-                      placeholder={fRendTipo === 'kg' ? 'Ex: 6' : fRendTipo === 'un' ? 'Ex: 20' : 'Ex: 75'}
+                    <input type="number" step="0.001" value={fRendValor} onChange={e => setFRendValor(e.target.value)}
+                      placeholder={fRendTipo === 'kg' ? 'Ex: 6.12' : fRendTipo === 'un' ? 'Ex: 20' : 'Ex: 75'}
                       style={{ flex: 1 }} />
                   </div>
                   <span className="ajuda">
@@ -808,8 +808,8 @@ function ProdutosComFicha() {
                           <option value="un">un</option>
                           <option value="%">%</option>
                         </select>
-                        <input type="number" value={fRendValor} onChange={e => setFRendValor(e.target.value)}
-                          placeholder={fRendTipo === 'kg' ? 'Ex: 6' : fRendTipo === 'un' ? 'Ex: 20' : 'Ex: 75'} />
+                        <input type="number" step="0.001" value={fRendValor} onChange={e => setFRendValor(e.target.value)}
+                          placeholder={fRendTipo === 'kg' ? 'Ex: 6.12' : fRendTipo === 'un' ? 'Ex: 20' : 'Ex: 75'} />
                       </div>
                     </div>
                   </div>
