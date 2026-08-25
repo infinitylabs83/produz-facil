@@ -266,12 +266,30 @@ function ProdutosComFicha() {
 
     setSalvando(true)
 
+    // Converte qtd da ficha para kg (para calcular meta quando tipo=kg)
+    function qtdParaKg(qtd, unidade) {
+      const v = Number(qtd) || 0
+      if (unidade === 'g' || unidade === 'ml') return v / 1000
+      return v
+    }
+
+    // Quando rendimento em kg: meta% = rendimento_kg / total_ingredientes_kg * 100
+    function calcularMetaDeKg(rendKg) {
+      if (!rendKg || ficha.length === 0) return parseFloat(fMeta) || 70
+      const totalKg = ficha.reduce((acc, f) => acc + qtdParaKg(f.quantidade_padrao, f.unidade_uso), 0)
+      if (!totalKg) return parseFloat(fMeta) || 70
+      return Math.round((rendKg / totalKg) * 100 * 10) / 10 // 1 casa decimal
+    }
+
     if (modo === 'novo') {
       const rVal = parseFloat(fRendValor) || null
+      const meta = fRendTipo === '%' ? (rVal || 70)
+        : fRendTipo === 'kg' ? calcularMetaDeKg(rVal)
+        : (parseFloat(fMeta) || 70)
       const { data, error } = await supabase.from('produtos').insert({
         empresa_id: empresaId, nome: fNome,
         porcao_padrao_g: parseFloat(fPorcao) || 100,
-        meta_rendimento: fRendTipo === '%' ? (rVal || 70) : (parseFloat(fMeta) || 70),
+        meta_rendimento: meta,
         rendimento_tipo: fRendTipo,
         rendimento_valor: rVal,
         rendimento_kg: fRendTipo === 'kg' ? rVal : null,
@@ -285,22 +303,25 @@ function ProdutosComFicha() {
 
     } else if (modo === 'editar') {
       const rVal = parseFloat(fRendValor) || null
+      const meta = fRendTipo === '%' ? (rVal || parseFloat(fMeta) || 70)
+        : fRendTipo === 'kg' ? calcularMetaDeKg(rVal)
+        : (parseFloat(fMeta) || 70)
       const { error } = await supabase.from('produtos').update({
         nome: fNome,
         porcao_padrao_g: parseFloat(fPorcao) || 100,
-        meta_rendimento: fRendTipo === '%' ? (rVal || parseFloat(fMeta) || 70) : (parseFloat(fMeta) || 70),
+        meta_rendimento: meta,
         rendimento_tipo: fRendTipo,
         rendimento_valor: rVal,
-        rendimento_kg: fRendTipo === 'kg' ? rVal : (fRendTipo === '%' ? null : null),
+        rendimento_kg: fRendTipo === 'kg' ? rVal : null,
         categoria: fCategoria,
       }).eq('id', selecionado.id)
       setSalvando(false)
       if (error) { setErro('Erro: ' + error.message); return }
-      setMsg('Produto atualizado!')
+      setMsg(`Produto atualizado! Meta de rendimento calculada: ${meta}%`)
       await carregarProdutos()
-      setSelecionado(prev => ({ ...prev, nome: fNome, porcao_padrao_g: parseFloat(fPorcao), meta_rendimento: parseFloat(fMeta), rendimento_tipo: fRendTipo, rendimento_valor: rVal, rendimento_kg: fRendTipo === 'kg' ? rVal : null, categoria: fCategoria }))
+      setSelecionado(prev => ({ ...prev, nome: fNome, porcao_padrao_g: parseFloat(fPorcao), meta_rendimento: meta, rendimento_tipo: fRendTipo, rendimento_valor: rVal, rendimento_kg: fRendTipo === 'kg' ? rVal : null, categoria: fCategoria }))
       setModo('ver')
-      setTimeout(() => setMsg(''), 3000)
+      setTimeout(() => setMsg(''), 4000)
     }
   }
 
