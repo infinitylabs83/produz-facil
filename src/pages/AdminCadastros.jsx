@@ -121,6 +121,28 @@ function ProdutosComFicha() {
   const [fRendTipo, setFRendTipo] = useState('%')
   const [fRendValor, setFRendValor] = useState('')
 
+  // toast de desfazer exclusão de ingrediente
+  const [toastUndo, setToastUndo] = useState(null) // { item, timer }
+
+  function mostrarToastUndo(item) {
+    if (toastUndo?.timer) clearTimeout(toastUndo.timer)
+    const timer = setTimeout(async () => {
+      await supabase.from('produto_ingredientes').delete().eq('id', item.id)
+      carregarFicha(selecionado.id)
+      carregarTodasLinhasFicha()
+      setToastUndo(null)
+    }, 6000)
+    setToastUndo({ item, timer })
+  }
+
+  async function desfazerRemocao() {
+    if (!toastUndo) return
+    clearTimeout(toastUndo.timer)
+    setToastUndo(null)
+    // item já está na ficha (remoção ainda não foi ao banco), só recarrega
+    carregarFicha(selecionado.id)
+  }
+
   // ficha técnica do produto selecionado
   const [ficha, setFicha]           = useState([])
   const [adicionandoIng, setAdicionandoIng] = useState(false)
@@ -409,11 +431,12 @@ function ProdutosComFicha() {
     carregarTodasLinhasFicha()
   }
 
-  async function removerIngrediente(id) {
-    if (!window.confirm('Remover este ingrediente da ficha?')) return
-    await supabase.from('produto_ingredientes').delete().eq('id', id)
-    carregarFicha(selecionado.id)
-    carregarTodasLinhasFicha()
+  function removerIngrediente(id) {
+    const item = ficha.find(f => f.id === id)
+    if (!item) return
+    // Remove da tela imediatamente mas só deleta do banco após 6s (permite desfazer)
+    setFicha(prev => prev.filter(f => f.id !== id))
+    mostrarToastUndo(item)
   }
 
   // Salva ingredientes importados via PDF na ficha técnica
@@ -824,6 +847,28 @@ function ProdutosComFicha() {
             )}
 
             {msg && <div className="mensagem-sucesso">{msg}</div>}
+
+            {/* ── TOAST DESFAZER ── */}
+            {toastUndo && (
+              <div style={{
+                position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+                background: '#1e293b', border: '1px solid #f97316', borderRadius: '12px',
+                padding: '14px 20px', display: 'flex', alignItems: 'center', gap: '14px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.4)', zIndex: 9999, minWidth: '300px',
+              }}>
+                <span style={{ fontSize: '1rem' }}>🗑️</span>
+                <span style={{ flex: 1, fontSize: '0.9rem', color: '#f1f5f9', fontWeight: 600 }}>
+                  Ingrediente removido
+                </span>
+                <button onClick={desfazerRemocao} style={{
+                  background: '#f97316', border: 'none', borderRadius: '8px',
+                  padding: '8px 16px', color: 'white', fontWeight: 800,
+                  fontSize: '0.85rem', cursor: 'pointer',
+                }}>
+                  Desfazer
+                </button>
+              </div>
+            )}
 
             {/* ── FICHA TÉCNICA ── */}
             <div style={{ borderTop: '2px solid var(--cor-borda)', paddingTop: '20px' }}>
