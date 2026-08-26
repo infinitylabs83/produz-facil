@@ -124,24 +124,33 @@ function ProdutosComFicha() {
   // toast de desfazer exclusão de ingrediente
   const [toastUndo, setToastUndo] = useState(null) // { item, produtoId, timer }
 
-  function mostrarToastUndo(item, produtoId) {
+  async function removerIngredienteComUndo(item, produtoId) {
+    // Deleta imediatamente do banco
+    await supabase.from('produto_ingredientes').delete().eq('id', item.id)
+    carregarFicha(produtoId)
+    carregarTodasLinhasFicha()
+    // Cancela toast anterior se houver
     if (toastUndo?.timer) clearTimeout(toastUndo.timer)
-    const timer = setTimeout(async () => {
-      // produtoId capturado no closure — não depende do state selecionado
-      await supabase.from('produto_ingredientes').delete().eq('id', item.id)
-      carregarFicha(produtoId)
-      carregarTodasLinhasFicha()
-      setToastUndo(null)
-    }, 6000)
+    // Mostra toast com timer só para fechar o aviso após 6s
+    const timer = setTimeout(() => setToastUndo(null), 6000)
     setToastUndo({ item, produtoId, timer })
   }
 
   async function desfazerRemocao() {
     if (!toastUndo) return
     clearTimeout(toastUndo.timer)
-    const { produtoId } = toastUndo
+    const { item, produtoId } = toastUndo
     setToastUndo(null)
+    // Re-insere o item deletado
+    await supabase.from('produto_ingredientes').insert({
+      produto_id: produtoId,
+      insumo_id: item.insumo_id || null,
+      produto_ref_id: item.produto_ref_id || null,
+      quantidade_padrao: item.quantidade_padrao,
+      unidade_uso: item.unidade_uso,
+    })
     carregarFicha(produtoId)
+    carregarTodasLinhasFicha()
   }
 
   // ficha técnica do produto selecionado
@@ -465,9 +474,8 @@ function ProdutosComFicha() {
     const item = ficha.find(f => f.id === id)
     if (!item) return
     const produtoId = selecionado?.id
-    // Remove da tela imediatamente mas só deleta do banco após 6s (permite desfazer)
     setFicha(prev => prev.filter(f => f.id !== id))
-    mostrarToastUndo(item, produtoId)
+    removerIngredienteComUndo(item, produtoId)
   }
 
   // Salva ingredientes importados via PDF na ficha técnica
