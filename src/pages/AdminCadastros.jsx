@@ -125,15 +125,13 @@ function ProdutosComFicha() {
   const [toastUndo, setToastUndo] = useState(null) // { item, produtoId, timer }
 
   async function removerIngredienteComUndo(item, produtoId) {
-    // Deleta imediatamente do banco
-    await supabase.from('produto_ingredientes').delete().eq('id', item.id)
-    carregarFicha(produtoId)
-    carregarTodasLinhasFicha()
     // Cancela toast anterior se houver
     if (toastUndo?.timer) clearTimeout(toastUndo.timer)
-    // Mostra toast com timer só para fechar o aviso após 6s
+    // Mostra toast imediatamente (UI já foi atualizada pelo setFicha no chamador)
     const timer = setTimeout(() => setToastUndo(null), 6000)
     setToastUndo({ item, produtoId, timer })
+    // Deleta do banco (não precisa recarregar — o state já está correto)
+    await supabase.from('produto_ingredientes').delete().eq('id', item.id)
   }
 
   async function desfazerRemocao() {
