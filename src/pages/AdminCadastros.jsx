@@ -122,25 +122,26 @@ function ProdutosComFicha() {
   const [fRendValor, setFRendValor] = useState('')
 
   // toast de desfazer exclusão de ingrediente
-  const [toastUndo, setToastUndo] = useState(null) // { item, timer }
+  const [toastUndo, setToastUndo] = useState(null) // { item, produtoId, timer }
 
-  function mostrarToastUndo(item) {
+  function mostrarToastUndo(item, produtoId) {
     if (toastUndo?.timer) clearTimeout(toastUndo.timer)
     const timer = setTimeout(async () => {
+      // produtoId capturado no closure — não depende do state selecionado
       await supabase.from('produto_ingredientes').delete().eq('id', item.id)
-      carregarFicha(selecionado.id)
+      carregarFicha(produtoId)
       carregarTodasLinhasFicha()
       setToastUndo(null)
     }, 6000)
-    setToastUndo({ item, timer })
+    setToastUndo({ item, produtoId, timer })
   }
 
   async function desfazerRemocao() {
     if (!toastUndo) return
     clearTimeout(toastUndo.timer)
+    const { produtoId } = toastUndo
     setToastUndo(null)
-    // item já está na ficha (remoção ainda não foi ao banco), só recarrega
-    carregarFicha(selecionado.id)
+    carregarFicha(produtoId)
   }
 
   // ficha técnica do produto selecionado
@@ -378,21 +379,29 @@ function ProdutosComFicha() {
   const [editIngId, setEditIngId]       = useState(null)
   const [editIngQtd, setEditIngQtd]     = useState('')
   const [editIngUnd, setEditIngUnd]     = useState('kg')
+  const [editIngBusca, setEditIngBusca] = useState('')
+  const [editIngInsumoId, setEditIngInsumoId] = useState(null)
 
   function iniciarEdicaoIng(f) {
     setEditIngId(f.id)
     setEditIngQtd(f.quantidade_padrao ?? '')
     setEditIngUnd(f.unidade_uso || 'kg')
+    setEditIngBusca(f.insumos?.nome || '')
+    setEditIngInsumoId(f.insumo_id || null)
   }
 
   async function salvarEdicaoIng(id) {
-    await supabase.from('produto_ingredientes').update({
+    const updates = {
       quantidade_padrao: parseFloat(editIngQtd) || null,
       unidade_uso: editIngUnd,
-    }).eq('id', id)
+    }
+    if (editIngInsumoId) updates.insumo_id = editIngInsumoId
+    await supabase.from('produto_ingredientes').update(updates).eq('id', id)
     setEditIngId(null)
+    setEditIngBusca('')
+    setEditIngInsumoId(null)
     carregarFicha(selecionado.id)
-    carregarTodasLinhasFicha() // custo/kg de quem usa esta ficha depende disso
+    carregarTodasLinhasFicha()
   }
 
   // ── Ficha técnica ──
@@ -455,9 +464,10 @@ function ProdutosComFicha() {
   function removerIngrediente(id) {
     const item = ficha.find(f => f.id === id)
     if (!item) return
+    const produtoId = selecionado?.id
     // Remove da tela imediatamente mas só deleta do banco após 6s (permite desfazer)
     setFicha(prev => prev.filter(f => f.id !== id))
-    mostrarToastUndo(item)
+    mostrarToastUndo(item, produtoId)
   }
 
   // Salva ingredientes importados via PDF na ficha técnica
@@ -1011,12 +1021,46 @@ function ProdutosComFicha() {
                     {/* MODO EDIÇÃO INLINE */}
                     {editando && (
                       <div style={{
-                        padding: '12px 14px', borderRadius: '8px',
+                        padding: '14px', borderRadius: '8px',
                         border: '2px solid var(--cor-primaria)', background: 'rgba(249,115,22,0.07)',
                       }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '10px', color: 'var(--cor-primaria)' }}>
-                          ✏️ Editando: {f.insumos?.nome}
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '12px', color: 'var(--cor-primaria)' }}>
+                          ✏️ Editando ingrediente
                         </div>
+
+                        {/* Troca de insumo */}
+                        {f.insumo_id && (
+                          <div className="campo-grupo" style={{ marginBottom: '10px' }}>
+                            <label style={{ fontSize: '0.8rem' }}>Ingrediente</label>
+                            <input
+                              type="text"
+                              value={editIngBusca}
+                              onChange={e => { setEditIngBusca(e.target.value); setEditIngInsumoId(null) }}
+                              placeholder="Buscar insumo..."
+                            />
+                            {editIngBusca.trim().length >= 1 && !editIngInsumoId && (() => {
+                              const resultados = insumos.filter(i =>
+                                i.nome.toLowerCase().includes(editIngBusca.toLowerCase()) &&
+                                !ficha.some(fi => fi.insumo_id === i.id && fi.id !== f.id)
+                              ).slice(0, 6)
+                              return resultados.length > 0 ? (
+                                <div style={{ border: '1px solid var(--cor-borda)', borderRadius: '8px', marginTop: '4px', overflow: 'hidden', background: 'var(--cor-fundo-card)' }}>
+                                  {resultados.map(i => (
+                                    <div key={i.id}
+                                      onClick={() => { setEditIngInsumoId(i.id); setEditIngBusca(i.nome) }}
+                                      style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '0.9rem', borderBottom: '1px solid var(--cor-borda)' }}
+                                      onMouseEnter={e => e.currentTarget.style.background = 'var(--cor-fundo)'}
+                                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                      {i.nome} <span style={{ color: 'var(--cor-texto-suave)', fontSize: '0.8rem' }}>R$ {parseFloat(i.preco_por_kg).toFixed(2)}/kg</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null
+                            })()}
+                          </div>
+                        )}
+
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
                           <div className="campo-grupo" style={{ marginBottom: 0, flex: 1 }}>
                             <label style={{ fontSize: '0.8rem' }}>Quantidade</label>
@@ -1025,7 +1069,7 @@ function ProdutosComFicha() {
                               value={editIngQtd}
                               onChange={e => setEditIngQtd(e.target.value)}
                               placeholder="Ex: 1.500"
-                              autoFocus
+                              autoFocus={!f.insumo_id}
                             />
                           </div>
                           <div className="campo-grupo" style={{ marginBottom: 0, minWidth: '100px' }}>
@@ -1039,7 +1083,7 @@ function ProdutosComFicha() {
                             </select>
                           </div>
                           <button className="btn btn-primario" onClick={() => salvarEdicaoIng(f.id)} style={{ padding: '10px 16px', marginBottom: 0 }}>
-                            ✓
+                            ✓ Salvar
                           </button>
                           <button className="btn btn-secundario" onClick={() => setEditIngId(null)} style={{ padding: '10px 14px', marginBottom: 0 }}>
                             ✕

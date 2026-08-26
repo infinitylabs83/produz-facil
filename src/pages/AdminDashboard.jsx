@@ -163,7 +163,6 @@ export default function AdminDashboard() {
     const salvo = sessionStorage.getItem('dashboard_produto')
     const existe = fab.find(p => p.id === salvo)
     setProdutoSelecionado(existe ? salvo : (fab[0]?.id || ''))
-    else if (prods?.length) setProdutoSelecionado(prods[0].id)
     if (ins?.length) setInsumoSelecionado(ins[0].id)
     setCarregando(false)
   }
