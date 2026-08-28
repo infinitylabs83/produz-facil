@@ -200,10 +200,13 @@ function ProdutosComFicha() {
   }
 
   async function carregarFicha(prodId) {
-    const { data } = await supabase
+    if (!prodId) { console.warn('[carregarFicha] prodId vazio'); return }
+    const { data, error } = await supabase
       .from('produto_ingredientes')
       .select('id, quantidade_padrao, unidade_uso, insumo_id, produto_ref_id, insumos(id, nome, preco_por_kg, unidade_padrao), produto_ref:produtos!produto_ref_id(id, nome, rendimento_kg, porcao_padrao_g)')
       .eq('produto_id', prodId)
+    if (error) console.error('[carregarFicha] erro:', error)
+    console.log('[carregarFicha] prodId:', prodId, '| rows:', data?.length, data)
     setFicha(data || [])
   }
 
