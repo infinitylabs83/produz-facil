@@ -130,8 +130,9 @@ function ProdutosComFicha() {
     // Mostra toast imediatamente (UI já foi atualizada pelo setFicha no chamador)
     const timer = setTimeout(() => setToastUndo(null), 6000)
     setToastUndo({ item, produtoId, timer })
-    // Deleta do banco (não precisa recarregar — o state já está correto)
+    // Deleta do banco e marca data de atualização
     await supabase.from('produto_ingredientes').delete().eq('id', item.id)
+    marcarFichaAtualizada(produtoId)
   }
 
   async function desfazerRemocao() {
@@ -197,6 +198,13 @@ function ProdutosComFicha() {
   async function carregarProdutos() {
     const { data } = await supabase.from('produtos').select('*').order('categoria').order('nome')
     setProdutos(data || [])
+  }
+
+  async function marcarFichaAtualizada(prodId) {
+    if (!prodId) return
+    const agora = new Date().toISOString()
+    await supabase.from('produtos').update({ ficha_atualizada_em: agora }).eq('id', prodId)
+    setSelecionado(prev => prev ? { ...prev, ficha_atualizada_em: agora } : prev)
   }
 
   async function carregarFicha(prodId) {
@@ -410,6 +418,7 @@ function ProdutosComFicha() {
     setEditIngId(null)
     setEditIngBusca('')
     setEditIngInsumoId(null)
+    marcarFichaAtualizada(selecionado.id)
     carregarFicha(selecionado.id)
     carregarTodasLinhasFicha()
   }
@@ -467,6 +476,7 @@ function ProdutosComFicha() {
     if (error) { setErro('Erro: ' + error.message); return }
     setIngInsumoId(''); setIngProdutoRefId(''); setIngQtd(''); setIngUnidade('kg'); setIngTipo('insumo')
     setAdicionandoIng(false)
+    marcarFichaAtualizada(selecionado.id)
     carregarFicha(selecionado.id)
     carregarTodasLinhasFicha()
   }
@@ -917,6 +927,11 @@ function ProdutosComFicha() {
                   <div style={{ fontWeight: 700, fontSize: '1rem' }}>📋 Ficha Técnica</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>
                     {ficha.length} ingrediente(s) cadastrado(s)
+                    {selecionado?.ficha_atualizada_em && (
+                      <span style={{ marginLeft: '10px', color: 'var(--cor-primaria)' }}>
+                        · Atualizada em {new Date(selecionado.ficha_atualizada_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button
