@@ -115,7 +115,7 @@ export default function Historico() {
         <button
           onClick={excluirTudo}
           className="badge-perigo"
-          style={{ border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
+          style={{ border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
         >
           🗑️ Apagar tudo
         </button>
@@ -150,7 +150,7 @@ export default function Historico() {
             { label: 'Perda alta', val: countStatus.perda, cor: 'var(--cor-perigo)' },
           ].map((k, i) => (
             <div key={i} className="card" style={{ borderTop: `3px solid ${k.cor}`, padding: '12px 16px' }}>
-              <div style={{ fontSize: '0.72rem', color: 'var(--cor-texto-suave)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{k.label}</div>
+              <div style={{ fontSize: '0.88rem', color: 'var(--cor-texto-suave)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{k.label}</div>
               <div style={{ fontWeight: 800, fontSize: '1.3rem', color: k.cor }}>{k.val}</div>
             </div>
           ))}
@@ -243,9 +243,9 @@ export default function Historico() {
               {filtradas.map(p => (
                 <>
                   <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => setExpandido(expandido === p.id ? null : p.id)}>
-                    <td style={{ whiteSpace: 'nowrap', color: 'var(--cor-texto-suave)', fontSize: '0.85rem' }}>
+                    <td style={{ whiteSpace: 'nowrap', color: 'var(--cor-texto-suave)', fontSize: '1rem' }}>
                       {new Date(p.created_at).toLocaleDateString('pt-BR')}
-                      <div style={{ fontSize: '0.75rem' }}>{new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                      <div style={{ fontSize: '0.92rem' }}>{new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
                     </td>
                     <td style={{ fontWeight: 600 }}>{p.produtos?.nome || '—'}</td>
                     <td className="col-esconder-mobile" style={{ color: 'var(--cor-texto-suave)' }}>{p.fornecedores?.nome || '—'}</td>
@@ -260,7 +260,7 @@ export default function Historico() {
                     </td>
                     <td>
                       <span style={{
-                        padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700,
+                        padding: '3px 10px', borderRadius: '20px', fontSize: '0.92rem', fontWeight: 700,
                         background: STATUS_BG[p.status] || 'rgba(100,116,139,0.1)',
                         color: STATUS_TEXT[p.status] || 'var(--cor-texto-suave)',
                       }}>
@@ -322,7 +322,7 @@ export default function Historico() {
 function DetalheItem({ label, valor }) {
   return (
     <div style={{ background: 'var(--cor-fundo-card)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--cor-borda)' }}>
-      <div style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--cor-texto-suave)', marginBottom: '2px' }}>{label}</div>
+      <div style={{ fontSize: '0.88rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--cor-texto-suave)', marginBottom: '2px' }}>{label}</div>
       <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{valor}</div>
     </div>
   )

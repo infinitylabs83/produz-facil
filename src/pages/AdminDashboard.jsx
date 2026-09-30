@@ -124,7 +124,7 @@ function BlocoMeta({ item }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
             <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{item.nome}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)' }}>rend. {item.media.toFixed(1)}%</span>
+            <span style={{ fontSize: '0.92rem', color: 'var(--cor-texto-suave)' }}>rend. {item.media.toFixed(1)}%</span>
           </div>
           <div style={{ height: '5px', borderRadius: '3px', background: 'var(--cor-borda)', overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: '3px', width: `${Math.min(item.media, 100)}%`, background: item.alerta.cor }} />
@@ -154,7 +154,7 @@ function BlocoMeta({ item }) {
         </div>
       )}
       {diag && (
-        <div style={{ marginTop: '5px', fontSize: '0.72rem', fontWeight: 600,
+        <div style={{ marginTop: '5px', fontSize: '0.88rem', fontWeight: 600,
           color: diag.ok ? 'var(--cor-sucesso)' : 'var(--cor-atencao)',
           paddingLeft: '2px',
         }}>
@@ -434,7 +434,7 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <div className="card-titulo" style={{ margin: 0 }}>Panorama geral</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
+            <div style={{ fontSize: '0.92rem', color: 'var(--cor-texto-suave)', marginTop: '2px' }}>
               {nomeMes}: <strong>{producoesMes.length} produção(ões)</strong> &nbsp;·&nbsp; ranking baseado nas últimas 10 produções de cada item
             </div>
           </div>
@@ -445,20 +445,20 @@ export default function AdminDashboard() {
           <div className="grid-2col-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
             {maisProduzido && (
               <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '10px', padding: '10px 16px', flex: 1, minWidth: '160px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--cor-texto-suave)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Mais produzido</div>
+                <div style={{ fontSize: '0.88rem', color: 'var(--cor-texto-suave)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Mais produzido</div>
                 <div style={{ fontWeight: 700, fontSize: '1rem' }}>{maisProduzido.nome}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--cor-sucesso)' }}>{maisProduzido.qtd}× no mês</div>
+                <div style={{ fontSize: '1.05rem', color: 'var(--cor-sucesso)' }}>{maisProduzido.qtd}× no mês</div>
               </div>
             )}
             {menosProduzido && maisProduzido?.id !== menosProduzido?.id && (
               <div style={{ background: 'rgba(100,116,139,0.08)', border: '1px solid var(--cor-borda)', borderRadius: '10px', padding: '10px 16px', flex: 1, minWidth: '160px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--cor-texto-suave)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Menos produzido</div>
+                <div style={{ fontSize: '0.88rem', color: 'var(--cor-texto-suave)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Menos produzido</div>
                 <div style={{ fontWeight: 700, fontSize: '1rem' }}>{menosProduzido.nome}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>{menosProduzido.qtd}× no mês</div>
+                <div style={{ fontSize: '1.05rem', color: 'var(--cor-texto-suave)' }}>{menosProduzido.qtd}× no mês</div>
               </div>
             )}
             {contagemPorProduto.length === 0 && (
-              <div style={{ color: 'var(--cor-texto-suave)', fontSize: '0.9rem' }}>Nenhuma produção registrada este mês.</div>
+              <div style={{ color: 'var(--cor-texto-suave)', fontSize: '1rem' }}>Nenhuma produção registrada este mês.</div>
             )}
           </div>
         )}
@@ -470,21 +470,21 @@ export default function AdminDashboard() {
           return (
             <div className="panorama-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--cor-sucesso)', marginBottom: '8px', letterSpacing: '0.04em' }}>
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--cor-sucesso)', marginBottom: '8px', letterSpacing: '0.04em' }}>
                   🏅 Dentro da meta
                 </div>
                 {dentroMetas.length > 0
                   ? <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>{dentroMetas.map(item => <BlocoMeta key={item.id} item={item} />)}</div>
-                  : <div style={{ color: 'var(--cor-texto-suave)', fontSize: '0.85rem', padding: '8px 0' }}>Nenhum produto dentro da meta ainda.</div>
+                  : <div style={{ color: 'var(--cor-texto-suave)', fontSize: '1rem', padding: '8px 0' }}>Nenhum produto dentro da meta ainda.</div>
                 }
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--cor-perigo)', marginBottom: '8px', letterSpacing: '0.04em' }}>
+                <div style={{ fontSize: '0.92rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--cor-perigo)', marginBottom: '8px', letterSpacing: '0.04em' }}>
                   ⚠️ Precisam de atenção
                 </div>
                 {foraMetas.length > 0
                   ? <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>{foraMetas.map(item => <BlocoMeta key={item.id} item={item} />)}</div>
-                  : <div style={{ color: 'var(--cor-sucesso)', fontSize: '0.85rem', padding: '8px 0' }}>✅ Todos os produtos estão dentro da meta.</div>
+                  : <div style={{ color: 'var(--cor-sucesso)', fontSize: '1rem', padding: '8px 0' }}>✅ Todos os produtos estão dentro da meta.</div>
                 }
               </div>
             </div>
@@ -494,7 +494,7 @@ export default function AdminDashboard() {
             Nenhuma produção registrada ainda.
           </div>
         )}
-        <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: '0.75rem', color: 'var(--cor-texto-suave)' }}>
+        <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: '0.92rem', color: 'var(--cor-texto-suave)' }}>
           <span>🟢 Dentro da meta</span>
           <span style={{ color: 'var(--cor-atencao)' }}>🟡 até −3%</span>
           <span style={{ color: '#f97316' }}>🟠 −3 a −7%</span>
@@ -509,7 +509,7 @@ export default function AdminDashboard() {
       ══════════════════════════════════════════ */}
       {/* ── Cabeçalho detalhe + busca de produto ── */}
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cor-texto-suave)', marginBottom: '10px' }}>
+        <div style={{ fontSize: '0.88rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cor-texto-suave)', marginBottom: '10px' }}>
           Detalhe por produto de fabricação
         </div>
         {(() => {
@@ -526,7 +526,7 @@ export default function AdminDashboard() {
                 <span style={{ flex: 1, fontWeight: 700, fontSize: '1rem', color: 'var(--cor-texto)' }}>
                   {nomeSelecionado || 'Selecione um produto'}
                 </span>
-                <span style={{ color: 'var(--cor-texto-suave)', fontSize: '0.8rem' }}>{listaProdAberta ? '▲' : '▼'}</span>
+                <span style={{ color: 'var(--cor-texto-suave)', fontSize: '1.05rem' }}>{listaProdAberta ? '▲' : '▼'}</span>
               </div>
               {listaProdAberta && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, background: 'var(--cor-fundo-card)', border: '2px solid var(--cor-primaria)', borderRadius: '12px', marginTop: '4px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
@@ -536,16 +536,16 @@ export default function AdminDashboard() {
                       value={buscaProduto}
                       onChange={e => setBuscaProduto(e.target.value)}
                       placeholder="🔍 Buscar produto..."
-                      style={{ width: '100%', background: 'var(--cor-fundo)', border: '1px solid var(--cor-borda)', borderRadius: '8px', padding: '10px 12px', color: 'var(--cor-texto)', fontSize: '0.95rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                      style={{ width: '100%', background: 'var(--cor-fundo)', border: '1px solid var(--cor-borda)', borderRadius: '8px', padding: '10px 12px', color: 'var(--cor-texto)', fontSize: '1.05rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                     />
                   </div>
                   <div style={{ maxHeight: '260px', overflowY: 'auto' }}>
                     {produtosFiltrados.length === 0 ? (
-                      <div style={{ padding: '16px', textAlign: 'center', color: 'var(--cor-texto-suave)', fontSize: '0.9rem' }}>Nenhum produto encontrado</div>
+                      <div style={{ padding: '16px', textAlign: 'center', color: 'var(--cor-texto-suave)', fontSize: '1rem' }}>Nenhum produto encontrado</div>
                     ) : produtosFiltrados.map(p => (
                       <div key={p.id}
                         onClick={() => { selecionarProduto(p.id); setListaProdAberta(false); setBuscaProduto('') }}
-                        style={{ padding: '14px 16px', cursor: 'pointer', fontWeight: p.id === produtoSelecionado ? 700 : 500, fontSize: '0.95rem', color: p.id === produtoSelecionado ? 'var(--cor-primaria)' : 'var(--cor-texto)', background: p.id === produtoSelecionado ? 'rgba(249,115,22,0.08)' : 'transparent', borderBottom: '1px solid var(--cor-borda)', transition: 'background 0.1s' }}
+                        style={{ padding: '14px 16px', cursor: 'pointer', fontWeight: p.id === produtoSelecionado ? 700 : 500, fontSize: '1.05rem', color: p.id === produtoSelecionado ? 'var(--cor-primaria)' : 'var(--cor-texto)', background: p.id === produtoSelecionado ? 'rgba(249,115,22,0.08)' : 'transparent', borderBottom: '1px solid var(--cor-borda)', transition: 'background 0.1s' }}
                         onMouseEnter={e => { if (p.id !== produtoSelecionado) e.currentTarget.style.background = 'var(--cor-fundo)' }}
                         onMouseLeave={e => { if (p.id !== produtoSelecionado) e.currentTarget.style.background = 'transparent' }}
                       >
@@ -574,18 +574,18 @@ export default function AdminDashboard() {
         <div className={`alerta-box ${diagDetalhe.ok ? 'alerta-box-sucesso' : 'alerta-box-atencao'}`} style={{ marginBottom: '20px' }}>
           <div className="alerta-titulo" style={{ color: diagDetalhe.ok ? 'var(--cor-sucesso)' : 'var(--cor-primaria)', marginBottom: diagDetalhe.ok ? 0 : '10px' }}>
             {diagDetalhe.ok ? '✅' : '🔎'} Diagnóstico — {nomeProdutoSelecionado}
-            <span style={{ fontWeight: 400, fontSize: '0.75rem', marginLeft: '8px', color: 'var(--cor-texto-suave)' }}>baseado na última produção vs histórico</span>
+            <span style={{ fontWeight: 400, fontSize: '0.92rem', marginLeft: '8px', color: 'var(--cor-texto-suave)' }}>baseado na última produção vs histórico</span>
           </div>
           {diagDetalhe.ok ? (
-            <span style={{ fontSize: '0.85rem', color: 'var(--cor-sucesso)' }}>Última produção dentro do padrão histórico. Nenhum desvio significativo identificado.</span>
+            <span style={{ fontSize: '1rem', color: 'var(--cor-sucesso)' }}>Última produção dentro do padrão histórico. Nenhum desvio significativo identificado.</span>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {diagDetalhe.problemas.map((p, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', background: 'var(--cor-fundo)', borderRadius: '8px', padding: '10px 12px' }}>
                   <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{p.icone}</span>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--cor-texto)', marginBottom: '2px' }}>{p.resumo}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>{p.detalhe}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--cor-texto)', marginBottom: '2px' }}>{p.resumo}</div>
+                    <div style={{ fontSize: '1.05rem', color: 'var(--cor-texto-suave)' }}>{p.detalhe}</div>
                   </div>
                 </div>
               ))}
@@ -594,7 +594,7 @@ export default function AdminDashboard() {
         </div>
       )}
       {diagDetalhe === null && producoesDoProduto.length > 0 && producoesDoProduto.length < 3 && (
-        <div style={{ background: 'var(--cor-fundo)', border: '1px solid var(--cor-borda)', borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', fontSize: '0.85rem', color: 'var(--cor-texto-suave)' }}>
+        <div style={{ background: 'var(--cor-fundo)', border: '1px solid var(--cor-borda)', borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', fontSize: '1rem', color: 'var(--cor-texto-suave)' }}>
           🔎 <strong>Diagnóstico indisponível</strong> — são necessárias pelo menos 3 produções para comparação histórica. ({producoesDoProduto.length} registrada{producoesDoProduto.length > 1 ? 's' : ''})
         </div>
       )}
@@ -610,11 +610,11 @@ export default function AdminDashboard() {
               <div key={f.id} className="alerta-item">
                 <div>
                   <div style={{ fontWeight: 600 }}>{f.nome}</div>
-                  {f.contato && <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>{f.contato}</div>}
+                  {f.contato && <div style={{ fontSize: '1.05rem', color: 'var(--cor-texto-suave)' }}>{f.contato}</div>}
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => aprovarFornecedor(f.id)} className="badge-sucesso" style={{ border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>✓ Aprovar</button>
-                  <button onClick={() => rejeitarFornecedor(f.id)} className="badge-perigo" style={{ border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>✕ Rejeitar</button>
+                  <button onClick={() => aprovarFornecedor(f.id)} className="badge-sucesso" style={{ border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>✓ Aprovar</button>
+                  <button onClick={() => rejeitarFornecedor(f.id)} className="badge-perigo" style={{ border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}>✕ Rejeitar</button>
                 </div>
               </div>
             ))}
@@ -634,7 +634,7 @@ export default function AdminDashboard() {
         </div>
 
         {producoesProduto.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--cor-texto-suave)', fontSize: '0.95rem' }}>
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--cor-texto-suave)', fontSize: '1.05rem' }}>
             Nenhuma produção registrada para este produto.
           </div>
         ) : (
@@ -663,24 +663,24 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
                     {rendMedio !== null && (
                       <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Rendimento médio</div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Rendimento médio</div>
                         <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--cor-texto)' }}>{rendMedio.toFixed(1)}%</div>
                       </div>
                     )}
                     {rendUltimo !== undefined && (
                       <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Última produção</div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Última produção</div>
                         <div style={{ fontSize: '1.5rem', fontWeight: 800, color: rendUltimo >= metaDoProduto ? 'var(--cor-sucesso)' : 'var(--cor-perigo)' }}>{Number(rendUltimo).toFixed(1)}%</div>
                       </div>
                     )}
                     {custoKgUltimo !== undefined && (
                       <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Custo/kg última produção</div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Custo/kg última produção</div>
                         <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#a855f7' }}>R$ {Number(custoKgUltimo).toFixed(2)}</div>
                       </div>
                     )}
                     <div>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Meta da ficha</div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--cor-texto-suave)', marginBottom: '4px' }}>Meta da ficha</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--cor-texto-suave)' }}>{metaDoProduto}%</div>
                     </div>
                   </div>
@@ -723,7 +723,7 @@ export default function AdminDashboard() {
               </BarChart>
             </ResponsiveContainer>
           )}
-          <div style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)', marginTop: '8px' }}>🟢 Acima da meta &nbsp; 🔴 Abaixo da meta</div>
+          <div style={{ fontSize: '0.92rem', color: 'var(--cor-texto-suave)', marginTop: '8px' }}>🟢 Acima da meta &nbsp; 🔴 Abaixo da meta</div>
         </div>
 
         {/* Gráfico 3: evolução do preço do insumo */}
@@ -736,9 +736,9 @@ export default function AdminDashboard() {
               <div style={{ background: 'rgba(239,68,68,0.07)', borderRadius: '8px', padding: '10px 12px' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--cor-perigo)', marginBottom: '6px' }}>📈 Maiores altas</div>
                 {maioresAltas.length === 0
-                  ? <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>Nenhuma</div>
+                  ? <div style={{ fontSize: '1.05rem', color: 'var(--cor-texto-suave)' }}>Nenhuma</div>
                   : maioresAltas.map((v, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '2px 0' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', padding: '2px 0' }}>
                       <span style={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.nome}</span>
                       <span style={{ fontWeight: 700, color: 'var(--cor-perigo)', marginLeft: '8px', flexShrink: 0 }}>+{v.variacao.toFixed(1)}%</span>
                     </div>
@@ -748,9 +748,9 @@ export default function AdminDashboard() {
               <div style={{ background: 'rgba(34,197,94,0.07)', borderRadius: '8px', padding: '10px 12px' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--cor-sucesso)', marginBottom: '6px' }}>📉 Maiores baixas</div>
                 {maioresBaixas.length === 0
-                  ? <div style={{ fontSize: '0.8rem', color: 'var(--cor-texto-suave)' }}>Nenhuma</div>
+                  ? <div style={{ fontSize: '1.05rem', color: 'var(--cor-texto-suave)' }}>Nenhuma</div>
                   : maioresBaixas.map((v, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '2px 0' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', padding: '2px 0' }}>
                       <span style={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.nome}</span>
                       <span style={{ fontWeight: 700, color: 'var(--cor-sucesso)', marginLeft: '8px', flexShrink: 0 }}>{v.variacao.toFixed(1)}%</span>
                     </div>
@@ -762,7 +762,7 @@ export default function AdminDashboard() {
 
           {/* Seletor com busca */}
           <div style={{ position: 'relative', marginBottom: '12px' }}>
-            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem', pointerEvents: 'none' }}>🔍</span>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '1rem', pointerEvents: 'none' }}>🔍</span>
             <input
               placeholder="Buscar insumo..."
               value={buscaInsumo}
@@ -777,20 +777,20 @@ export default function AdminDashboard() {
                 const match = exato || inicio || qualquer
                 if (match) setInsumoSelecionado(match.id)
               }}
-              style={{ width: '100%', paddingLeft: '32px', padding: '8px 12px 8px 32px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '0.85rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', boxSizing: 'border-box' }}
+              style={{ width: '100%', paddingLeft: '32px', padding: '8px 12px 8px 32px', border: '2px solid var(--cor-borda)', borderRadius: '8px', fontSize: '1rem', fontFamily: 'inherit', background: 'var(--cor-fundo-card)', color: 'var(--cor-texto)', boxSizing: 'border-box' }}
             />
           </div>
-          <select value={insumoSelecionado} onChange={e => { setInsumoSelecionado(e.target.value); setBuscaInsumo('') }} className="select-padrao" style={{ width: '100%', marginBottom: '12px', fontSize: '0.85rem' }}>
+          <select value={insumoSelecionado} onChange={e => { setInsumoSelecionado(e.target.value); setBuscaInsumo('') }} className="select-padrao" style={{ width: '100%', marginBottom: '12px', fontSize: '1rem' }}>
             {insumos
               .filter(i => !buscaInsumo || i.nome.toLowerCase().includes(buscaInsumo.toLowerCase()))
               .map(i => <option key={i.id} value={i.id}>{i.nome}</option>)}
           </select>
 
           {historicoInsumo.length <= 1 ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cor-texto-suave)', fontSize: '0.9rem' }}>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cor-texto-suave)', fontSize: '1rem' }}>
               <div style={{ fontSize: '1.4rem', marginBottom: '6px' }}>📊</div>
               Preço atual: <strong>R$ {precoInsumoAtual ? parseFloat(precoInsumoAtual.preco_por_kg).toFixed(2) : '—'}/kg</strong>
-              <div style={{ marginTop: '6px', fontSize: '0.8rem' }}>Edite o preço nos Cadastros para o histórico aparecer aqui.</div>
+              <div style={{ marginTop: '6px', fontSize: '1.05rem' }}>Edite o preço nos Cadastros para o histórico aparecer aqui.</div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={180}>
@@ -821,7 +821,7 @@ export default function AdminDashboard() {
                     {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                   </td>
                   <td>{p.produtos?.nome}</td>
-                  <td className="col-esconder-mobile" style={{ color: 'var(--cor-texto-suave)', fontSize: '0.85rem' }}>{new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
+                  <td className="col-esconder-mobile" style={{ color: 'var(--cor-texto-suave)', fontSize: '1rem' }}>{new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
                   <td style={{ fontWeight: 700, color: 'var(--cor-sucesso)' }}>{parseFloat(p.rendimento || 0).toFixed(1)}%</td>
                   <td className="col-esconder-mobile">R$ {parseFloat(p.custo_porcao || 0).toFixed(2)}</td>
                   <td><span className={`status-badge status-${p.status}`}>{p.status}</span></td>
