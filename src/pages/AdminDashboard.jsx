@@ -99,16 +99,29 @@ function BlocoMeta({ item }) {
 function TooltipGrafico({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="tooltip-custom">
-      <div className="tooltip-label">{label}</div>
+    <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '10px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
       {payload.map(p => (
-        <div key={p.dataKey} style={{ color: p.color, fontSize: '0.85rem' }}>
+        <div key={p.dataKey} style={{ color: p.color, fontSize: '0.88rem', fontWeight: 600, marginBottom: '2px' }}>
           {p.name}:{' '}
           {p.dataKey === 'Rendimento %' ? `${p.value}%` : `R$ ${p.value}`}
           {p.dataKey === 'Custo/kg R$' && p.payload?.porcao != null
             ? ` (R$ ${p.payload.porcao.toFixed(2)} a porção)` : ''}
         </div>
       ))}
+    </div>
+  )
+}
+
+function TooltipBarras({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const entry = payload[0]
+  return (
+    <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '10px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ color: entry?.color || '#fff', fontSize: '0.95rem', fontWeight: 700 }}>
+        rendimento : {entry?.value}%
+      </div>
     </div>
   )
 }
@@ -521,7 +534,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="data" tick={{ fontSize: 12, fill: 'var(--cor-texto-suave)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} axisLine={false} tickLine={false} />
                 <Tooltip content={<TooltipGrafico />} />
-                <Line type="monotone" dataKey="Custo/kg R$" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
+                <Line type="natural" dataKey="Custo/kg R$" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
               </LineChart>
             </ResponsiveContainer>
 
@@ -574,13 +587,26 @@ export default function AdminDashboard() {
           {rendPorProduto.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px', color: 'var(--cor-texto-suave)' }}>Nenhuma produção.</div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={rendPorProduto} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
+            <ResponsiveContainer width="100%" height={Math.max(220, rendPorProduto.length * 36)}>
+              <BarChart data={rendPorProduto} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 4 }}>
                 <CartesianGrid stroke="var(--cor-borda)" strokeOpacity={0.4} horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `${v}%`} />
-                <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: 'var(--cor-texto-suave)' }} width={90} />
-                <Tooltip contentStyle={{ background: 'var(--cor-fundo-card)', border: '1px solid var(--cor-borda)', borderRadius: '8px', color: 'var(--cor-texto)' }} formatter={v => `${v}%`} />
-                <Bar dataKey="rendimento" radius={[0, 4, 4, 0]}>
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  width={110}
+                  tick={({ x, y, payload }) => {
+                    const nome = payload.value.replace(/ ?- ?FAB/i, '')
+                    const curto = nome.length > 13 ? nome.slice(0, 13) + '…' : nome
+                    return (
+                      <text x={x} y={y} dy={4} textAnchor="end" fill="var(--cor-texto-suave)" fontSize={11}>
+                        {curto}
+                      </text>
+                    )
+                  }}
+                />
+                <Tooltip content={<TooltipBarras />} />
+                <Bar dataKey="rendimento" radius={[0, 5, 5, 0]} barSize={18}>
                   {rendPorProduto.map((entry, i) => <Cell key={i} fill={entry.rendimento >= entry.meta ? '#22c55e' : '#ef4444'} />)}
                 </Bar>
               </BarChart>
@@ -662,7 +688,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="data" tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} />
                 <YAxis tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} domain={['dataMin - 2', 'dataMax + 2']} />
                 <Tooltip contentStyle={{ background: 'var(--cor-fundo-card)', border: '1px solid var(--cor-borda)', borderRadius: '8px', color: 'var(--cor-texto)' }} formatter={v => [`R$ ${v}/kg`, 'Preço']} />
-                <Line type="monotone" dataKey="Preço R$/kg" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
+                <Line type="natural" dataKey="Preço R$/kg" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
               </LineChart>
             </ResponsiveContainer>
           )}

@@ -121,36 +121,20 @@ export default function Historico() {
         </button>
       </div>
 
-      {/* ── Tabs por produto ── */}
+      {/* ── Filtro por produto (seletor) ── */}
       {produtos.length > 0 && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-          <button
-            onClick={() => setFiltroProduto('')}
-            style={{
-              padding: '8px 16px', borderRadius: '20px', border: '2px solid',
-              borderColor: !filtroProduto ? 'var(--cor-primaria)' : 'var(--cor-borda)',
-              background: !filtroProduto ? 'var(--cor-primaria)' : 'transparent',
-              color: !filtroProduto ? '#fff' : 'var(--cor-texto-suave)',
-              cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.15s',
-            }}
+        <div style={{ marginBottom: '20px' }}>
+          <select
+            value={filtroProduto}
+            onChange={e => setFiltroProduto(e.target.value)}
+            className="select-padrao"
+            style={{ width: '100%', maxWidth: '420px', fontSize: '0.95rem', fontWeight: 600 }}
           >
-            Todos
-          </button>
-          {produtos.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setFiltroProduto(p.id)}
-              style={{
-                padding: '8px 16px', borderRadius: '20px', border: '2px solid',
-                borderColor: filtroProduto === p.id ? 'var(--cor-primaria)' : 'var(--cor-borda)',
-                background: filtroProduto === p.id ? 'var(--cor-primaria)' : 'transparent',
-                color: filtroProduto === p.id ? '#fff' : 'var(--cor-texto-suave)',
-                cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.15s',
-              }}
-            >
-              {p.nome}
-            </button>
-          ))}
+            <option value="">Todos os produtos</option>
+            {produtos.map(p => (
+              <option key={p.id} value={p.id}>{p.nome}</option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -205,8 +189,8 @@ export default function Historico() {
                 formatter={(v, name) => name === 'Custo/porção' ? [`R$ ${v}`, name] : [`${v}%`, name]}
               />
               <Legend wrapperStyle={{ fontSize: '0.82rem', paddingTop: '8px' }} />
-              <Area yAxisId="custo" type="monotone" dataKey="Custo/porção" stroke="#f97316" strokeWidth={2.5} fill="url(#gradCusto)" dot={false} activeDot={{ r: 5 }} />
-              <Area yAxisId="rend"  type="monotone" dataKey="Rendimento %" stroke="#22c55e" strokeWidth={2.5} fill="url(#gradRend)"  dot={false} activeDot={{ r: 5 }} />
+              <Area yAxisId="custo" type="natural" dataKey="Custo/porção" stroke="#f97316" strokeWidth={2.5} fill="url(#gradCusto)" dot={false} activeDot={{ r: 5 }} />
+              <Area yAxisId="rend"  type="natural" dataKey="Rendimento %" stroke="#22c55e" strokeWidth={2.5} fill="url(#gradRend)"  dot={false} activeDot={{ r: 5 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
