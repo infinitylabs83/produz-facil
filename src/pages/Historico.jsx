@@ -189,8 +189,8 @@ export default function Historico() {
                 formatter={(v, name) => name === 'Custo/porção' ? [`R$ ${v}`, name] : [`${v}%`, name]}
               />
               <Legend wrapperStyle={{ fontSize: '0.82rem', paddingTop: '8px' }} />
-              <Area yAxisId="custo" type="natural" dataKey="Custo/porção" stroke="#f97316" strokeWidth={2.5} fill="url(#gradCusto)" dot={false} activeDot={{ r: 5 }} />
-              <Area yAxisId="rend"  type="natural" dataKey="Rendimento %" stroke="#22c55e" strokeWidth={2.5} fill="url(#gradRend)"  dot={false} activeDot={{ r: 5 }} />
+              <Area yAxisId="custo" type="monotone" dataKey="Custo/porção" stroke="#f97316" strokeWidth={2.5} fill="url(#gradCusto)" dot={false} activeDot={{ r: 5 }} />
+              <Area yAxisId="rend"  type="monotone" dataKey="Rendimento %" stroke="#22c55e" strokeWidth={2.5} fill="url(#gradRend)"  dot={false} activeDot={{ r: 5 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

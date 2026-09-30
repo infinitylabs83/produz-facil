@@ -645,7 +645,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="data" tick={{ fontSize: 12, fill: 'var(--cor-texto-suave)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} axisLine={false} tickLine={false} />
                 <Tooltip content={<TooltipGrafico />} />
-                <Line type="natural" dataKey="Custo/kg R$" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
+                <Line type="monotone" dataKey="Custo/kg R$" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
               </LineChart>
             </ResponsiveContainer>
 
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="data" tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} />
                 <YAxis tick={{ fontSize: 10, fill: 'var(--cor-texto-suave)' }} tickFormatter={v => `R$${v}`} domain={['dataMin - 2', 'dataMax + 2']} />
                 <Tooltip contentStyle={{ background: 'var(--cor-fundo-card)', border: '1px solid var(--cor-borda)', borderRadius: '8px', color: 'var(--cor-texto)' }} formatter={v => [`R$ ${v}/kg`, 'Preço']} />
-                <Line type="natural" dataKey="Preço R$/kg" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
+                <Line type="monotone" dataKey="Preço R$/kg" stroke="#a855f7" strokeWidth={3} dot={{ r: 5, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 7 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
