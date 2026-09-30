@@ -345,10 +345,10 @@ export default function AdminDashboard() {
   const produtoAtual = produtos.find(p => p.id === produtoSelecionado)
   const metaDoProduto = produtoAtual?.meta_rendimento || 70
   const custoKgMetaProduto = custoKgMetaMap.get(produtoSelecionado) || 0
+  const producoesDoProduto = producoes.filter(p => p.produto_id === produtoSelecionado)
   const custoKgRealProduto = producoesDoProduto[0]?.custo_por_kg_pronto || 0
   const alertaCustoKg = custoKgMetaProduto > 0 ? nivelAlertaCusto(custoKgRealProduto, custoKgMetaProduto) : null
   const nomeProdutoSelecionado = produtos.find(p => p.id === produtoSelecionado)?.nome || '—'
-  const producoesDoProduto = producoes.filter(p => p.produto_id === produtoSelecionado)
   const totalDoProduto = producoesDoProduto.length
   const dentroMeta = producoesDoProduto.filter(p => (p.rendimento || 0) >= metaDoProduto).length
   const foraMeta   = producoesDoProduto.filter(p => (p.rendimento || 0) < metaDoProduto).length
