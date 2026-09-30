@@ -30,8 +30,8 @@ body {
   font-family: var(--fonte);
   background-color: var(--cor-fundo);
   color: var(--cor-texto);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 17px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -95,11 +95,11 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 13px 16px;
   border-radius: 8px;
   color: rgba(255,255,255,0.7);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 500;
   border: none;
   background: none;
@@ -147,19 +147,19 @@ body {
 }
 
 .card-titulo {
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--cor-primaria);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .card-valor {
-  font-size: 2.4rem;
+  font-size: 2.6rem;
   font-weight: 700;
   color: var(--cor-texto);
   font-family: var(--fonte-mono);
@@ -168,9 +168,9 @@ body {
 }
 
 .card-subtexto {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--cor-texto-suave);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 /* ===== GRID DE MÉTRICAS ===== */
@@ -243,7 +243,7 @@ body {
 }
 
 .campo-grupo label {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--cor-texto);
 }
@@ -408,23 +408,23 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 th {
   text-align: left;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: var(--cor-fundo);
   color: var(--cor-texto-suave);
-  font-weight: 600;
-  font-size: 0.8rem;
+  font-weight: 700;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   border-bottom: 2px solid var(--cor-borda);
 }
 
 td {
-  padding: 14px 16px;
+  padding: 16px 16px;
   border-bottom: 1px solid var(--cor-borda);
   vertical-align: middle;
 }
@@ -460,7 +460,7 @@ tr:hover td {
 }
 
 .pagina-titulo {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--cor-texto);
@@ -468,8 +468,8 @@ tr:hover td {
 
 .pagina-subtitulo {
   color: var(--cor-texto-suave);
-  font-size: 0.88rem;
-  margin-top: 3px;
+  font-size: 1rem;
+  margin-top: 4px;
 }
 
 /* ===== MENSAGENS ===== */
@@ -587,17 +587,17 @@ tr:hover td {
     font-size: 16px; /* evita zoom automático no iOS */
   }
 
-  /* Textos maiores nos cards em mobile */
+  /* Textos nos cards em mobile */
   .card-titulo {
-    font-size: 0.88rem !important;
+    font-size: 0.9rem !important;
   }
 
   .card-valor {
-    font-size: 1.75rem !important;
+    font-size: 2rem !important;
   }
 
   .card-subtexto {
-    font-size: 0.88rem !important;
+    font-size: 0.95rem !important;
   }
 
   /* Gráficos: altura mínima garantida em mobile (quando em coluna única) */
