@@ -1,16 +1,19 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Landing from './pages/Landing'
 import KitchenProduction from './pages/KitchenProduction'
-import AdminDashboard from './pages/AdminDashboard'
-import AdminCadastros from './pages/AdminCadastros'
-import Historico from './pages/Historico'
 import Configuracoes from './pages/Configuracoes'
 import Leads from './pages/Leads'
 import PainelMaster from './pages/PainelMaster'
 import KitchenGateway from './pages/KitchenGateway'
+
+// Lazy imports para páginas com Recharts — evita bug de inicialização circular do Rollup
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const AdminCadastros = lazy(() => import('./pages/AdminCadastros'))
+const Historico = lazy(() => import('./pages/Historico'))
 
 // Tela exibida quando o usuário confirmou o e-mail mas o admin ainda não criou o perfil
 function AguardandoAprovacao() {
@@ -82,19 +85,19 @@ export default function App() {
 
       <Route path="/dashboard" element={
         <RotaProtegida perfisPermitidos={['administrativo', 'gestor']}>
-          <Layout><AdminDashboard /></Layout>
+          <Layout><Suspense fallback={<div className="loading-tela">Carregando...</div>}><AdminDashboard /></Suspense></Layout>
         </RotaProtegida>
       } />
 
       <Route path="/historico" element={
         <RotaProtegida perfisPermitidos={['administrativo', 'gestor']}>
-          <Layout><Historico /></Layout>
+          <Layout><Suspense fallback={<div className="loading-tela">Carregando...</div>}><Historico /></Suspense></Layout>
         </RotaProtegida>
       } />
 
       <Route path="/cadastros" element={
         <RotaProtegida perfisPermitidos={['administrativo', 'gestor']}>
-          <Layout><AdminCadastros /></Layout>
+          <Layout><Suspense fallback={<div className="loading-tela">Carregando...</div>}><AdminCadastros /></Suspense></Layout>
         </RotaProtegida>
       } />
 
