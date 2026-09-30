@@ -56,20 +56,30 @@ body {
 }
 
 .sidebar-logo {
-  padding: 0 24px 24px;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--cor-primaria);
+  padding: 20px 24px 20px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
   border-bottom: 1px solid rgba(255,255,255,0.1);
   margin-bottom: 16px;
+  background: linear-gradient(135deg, rgba(249,115,22,0.25) 0%, rgba(249,115,22,0.05) 100%);
+  border-left: 4px solid var(--cor-primaria);
+}
+
+.sidebar-logo .nome-app {
+  color: var(--cor-primaria);
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 .sidebar-logo span {
-  color: white;
+  color: rgba(255,255,255,0.55);
   font-weight: 400;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   display: block;
-  margin-top: 2px;
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .sidebar-nav {
@@ -133,36 +143,27 @@ body {
   padding: 24px;
   box-shadow: var(--sombra);
   border: 1px solid var(--cor-borda);
+  border-left: 4px solid var(--cor-primaria);
 }
 
 .card-titulo {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--cor-texto-suave);
+  letter-spacing: 0.1em;
+  color: var(--cor-primaria);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.card-titulo::before {
-  content: '';
-  display: inline-block;
-  width: 3px;
-  height: 14px;
-  background: var(--cor-primaria);
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
 .card-valor {
-  font-size: 2.1rem;
+  font-size: 2.4rem;
   font-weight: 700;
   color: var(--cor-texto);
   font-family: var(--fonte-mono);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   line-height: 1.1;
 }
 
@@ -441,18 +442,34 @@ tr:hover td {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--cor-borda);
+  position: relative;
+}
+
+.pagina-cabecalho::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: var(--cor-primaria);
+  border-radius: 2px;
 }
 
 .pagina-titulo {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--cor-texto);
 }
 
 .pagina-subtitulo {
   color: var(--cor-texto-suave);
-  font-size: 0.9rem;
-  margin-top: 2px;
+  font-size: 0.88rem;
+  margin-top: 3px;
 }
 
 /* ===== MENSAGENS ===== */

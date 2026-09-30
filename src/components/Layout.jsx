@@ -91,8 +91,8 @@ export default function Layout({ children }) {
                 style={{ maxHeight: '52px', maxWidth: '160px', objectFit: 'contain', display: 'block' }} />
             </div>
           )}
-          <div style={{ color: 'var(--cor-primaria)', fontWeight: 700, fontSize: logoUrl ? '0.9rem' : '1.2rem' }}>
-            {nomeEmpresa || 'ProduzFácil'}
+          <div style={{ fontWeight: 900, fontSize: logoUrl ? '0.9rem' : '1.25rem' }}>
+            <span className="nome-app">{nomeEmpresa || 'ProduzFácil'}</span>
           </div>
           <span>CMV — Controle de Custos</span>
         </div>
