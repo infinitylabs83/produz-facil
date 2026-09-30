@@ -6,6 +6,63 @@ import {
 import { supabase } from '../lib/supabase'
 import MetricCard from '../components/MetricCard'
 
+// ─── HELPERS: cálculo do custo/kg teórico da ficha técnica ───
+function emKgDash(qtd, unidade) {
+  return (unidade === 'g' ? (qtd || 0) / 1000 : (qtd || 0))
+}
+function rendimentoDeDash(produto, pesoIngredientes) {
+  const tipo = produto?.rendimento_tipo || '%'
+  const val = Number(produto?.rendimento_valor)
+  if (tipo === 'kg') return isNaN(val) || val <= 0 ? (Number(produto?.rendimento_kg) || 0) : val
+  if (tipo === 'un') {
+    const porcaoKg = parseFloat(produto?.porcao_padrao_g || 100) / 1000
+    return (isNaN(val) || val <= 0 ? 0 : val) * porcaoKg
+  }
+  if (tipo === '%' && !isNaN(val) && val > 0) return pesoIngredientes * (val / 100)
+  const legacyKg = Number(produto?.rendimento_kg)
+  if (legacyKg > 0) return legacyKg
+  return pesoIngredientes * ((Number(produto?.meta_rendimento) || 100) / 100)
+}
+function calcularCustoKgMeta(produtos, linhasFicha, insumos) {
+  const precoInsumo = new Map(insumos.map(i => [i.id, Number(i.preco_por_kg) || 0]))
+  const produtoById = new Map(produtos.map(p => [p.id, p]))
+  const linhasPorProduto = new Map()
+  for (const l of linhasFicha) {
+    if (!linhasPorProduto.has(l.produto_id)) linhasPorProduto.set(l.produto_id, [])
+    linhasPorProduto.get(l.produto_id).push(l)
+  }
+  const memo = new Map()
+  const visitando = new Set()
+  function custoKgFn(produtoId) {
+    if (memo.has(produtoId)) return memo.get(produtoId)
+    if (visitando.has(produtoId)) return 0
+    visitando.add(produtoId)
+    let custo = 0, peso = 0
+    for (const l of linhasPorProduto.get(produtoId) || []) {
+      const qKg = emKgDash(Number(l.quantidade_padrao), l.unidade_uso)
+      peso += qKg
+      custo += qKg * (l.produto_ref_id ? custoKgFn(l.produto_ref_id) : (precoInsumo.get(l.insumo_id) || 0))
+    }
+    const rend = rendimentoDeDash(produtoById.get(produtoId), peso)
+    const valor = rend > 0 ? custo / rend : 0
+    visitando.delete(produtoId)
+    memo.set(produtoId, valor)
+    return valor
+  }
+  const out = new Map()
+  for (const p of produtos) out.set(p.id, custoKgFn(p.id))
+  return out
+}
+
+function nivelAlertaCusto(real, meta) {
+  if (!meta || meta <= 0) return { cor: 'var(--cor-texto-suave)', label: 'Sem meta', bg: 'transparent', desvio: null }
+  const desvio = ((real - meta) / meta) * 100
+  if (desvio <= 0)  return { cor: 'var(--cor-sucesso)', label: `${desvio.toFixed(1)}%`, bg: 'rgba(34,197,94,0.12)', desvio }
+  if (desvio <= 5)  return { cor: 'var(--cor-atencao)', label: `+${desvio.toFixed(1)}%`, bg: 'rgba(245,158,11,0.12)', desvio }
+  if (desvio <= 10) return { cor: '#f97316',             label: `+${desvio.toFixed(1)}%`, bg: 'rgba(249,115,22,0.12)', desvio }
+  return              { cor: 'var(--cor-perigo)',          label: `+${desvio.toFixed(1)}%`, bg: 'rgba(239,68,68,0.15)', desvio }
+}
+
 // ─── FUNÇÃO DE DIAGNÓSTICO ───
 // Compara a produção mais recente contra o histórico do mesmo produto
 function diagnosticar(producoesProd) {
@@ -55,6 +112,9 @@ function diagnosticar(producoesProd) {
 
 function BlocoMeta({ item }) {
   const diag = item.diagnostico
+  const alertaCusto = item.custoKgMeta > 0 && item.custoKgReal > 0
+    ? nivelAlertaCusto(item.custoKgReal, item.custoKgMeta)
+    : null
   return (
     <div style={{
       padding: '8px 12px', borderRadius: '8px',
@@ -64,18 +124,35 @@ function BlocoMeta({ item }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
             <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{item.nome}</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)' }}>meta {item.meta}%</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--cor-texto-suave)' }}>rend. {item.media.toFixed(1)}%</span>
           </div>
           <div style={{ height: '5px', borderRadius: '3px', background: 'var(--cor-borda)', overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: '3px', width: `${Math.min(item.media, 100)}%`, background: item.alerta.cor }} />
           </div>
         </div>
-        <div style={{ textAlign: 'right', minWidth: '72px' }}>
-          <div style={{ fontWeight: 700, color: item.alerta.cor, fontSize: '1rem' }}>{item.media.toFixed(1)}%</div>
-          <div style={{ fontSize: '0.68rem', color: item.alerta.cor, fontWeight: 600 }}>{item.alerta.label}</div>
+        <div style={{ textAlign: 'right', minWidth: '80px' }}>
+          {alertaCusto ? (
+            <>
+              <div style={{ fontWeight: 700, color: alertaCusto.cor, fontSize: '0.92rem' }}>
+                R${item.custoKgReal.toFixed(2)}/kg
+              </div>
+              <div style={{ fontSize: '0.68rem', color: alertaCusto.cor, fontWeight: 600 }}>
+                {alertaCusto.label} vs ficha
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontWeight: 700, color: item.alerta.cor, fontSize: '1rem' }}>{item.media.toFixed(1)}%</div>
+              <div style={{ fontSize: '0.68rem', color: item.alerta.cor, fontWeight: 600 }}>{item.alerta.label}</div>
+            </>
+          )}
         </div>
       </div>
-      {/* Diagnóstico resumido */}
+      {alertaCusto && (
+        <div style={{ marginTop: '4px', fontSize: '0.7rem', color: 'var(--cor-texto-suave)', paddingLeft: '2px' }}>
+          Meta ficha: R${item.custoKgMeta.toFixed(2)}/kg
+        </div>
+      )}
       {diag && (
         <div style={{ marginTop: '5px', fontSize: '0.72rem', fontWeight: 600,
           color: diag.ok ? 'var(--cor-sucesso)' : 'var(--cor-atencao)',
@@ -116,12 +193,28 @@ function TooltipGrafico({ active, payload, label }) {
 function TooltipBarras({ active, payload, label }) {
   if (!active || !payload?.length) return null
   const entry = payload[0]
+  const d = entry?.payload
   return (
-    <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '10px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
-      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div style={{ color: entry?.color || '#fff', fontSize: '0.95rem', fontWeight: 700 }}>
-        rendimento : {entry?.value}%
+    <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '10px', padding: '10px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', minWidth: '180px' }}>
+      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ color: entry?.color || '#fff', fontSize: '0.92rem', fontWeight: 700, marginBottom: '4px' }}>
+        rendimento médio: {entry?.value}%
       </div>
+      {d?.custoKgMeta > 0 && (
+        <>
+          <div style={{ fontSize: '0.82rem', color: '#e2e8f0', marginBottom: '2px' }}>
+            Custo/kg real: <strong>R$ {d.custoKgReal.toFixed(2)}</strong>
+          </div>
+          <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
+            Meta ficha: R$ {d.custoKgMeta.toFixed(2)}
+            {d.desvCusto !== null && (
+              <span style={{ marginLeft: '6px', fontWeight: 700, color: d.desvCusto <= 0 ? '#22c55e' : d.desvCusto <= 5 ? '#f59e0b' : '#ef4444' }}>
+                ({d.desvCusto > 0 ? '+' : ''}{d.desvCusto}%)
+              </span>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -141,6 +234,8 @@ export default function AdminDashboard() {
   const [insumos, setInsumos]       = useState([])
   const [historicoPrecos, setHistoricoPrecos] = useState([])
   const [fornPendentes, setFornPendentes] = useState([])
+  const [todasLinhasFicha, setTodasLinhasFicha] = useState([])
+  const [custoKgMetaMap, setCustoKgMetaMap] = useState(new Map())
   const [carregando, setCarregando] = useState(true)
 
   const [produtoSelecionado, setProdutoSelecionado] = useState('')
@@ -157,12 +252,13 @@ export default function AdminDashboard() {
   useEffect(() => { carregar() }, [])
 
   async function carregar() {
-    const [{ data: prods }, { data: ins }, { data: precs }, { data: prod }, { data: forn }] = await Promise.all([
-      supabase.from('produtos').select('id, nome, meta_rendimento, porcao_padrao_g').order('nome'),
+    const [{ data: prods }, { data: ins }, { data: precs }, { data: prod }, { data: forn }, { data: linhas }] = await Promise.all([
+      supabase.from('produtos').select('id, nome, meta_rendimento, porcao_padrao_g, rendimento_kg, rendimento_tipo, rendimento_valor').order('nome'),
       supabase.from('insumos').select('id, nome, preco_por_kg').order('nome'),
       supabase.from('historico_precos_insumos').select('*, insumos(nome)').order('created_at'),
       supabase.from('producoes').select('*, produtos(nome, meta_rendimento)').order('created_at', { ascending: false }).limit(150),
       supabase.from('fornecedores').select('*'),
+      supabase.from('produto_ingredientes').select('produto_id, insumo_id, produto_ref_id, quantidade_padrao, unidade_uso'),
     ])
     // Todos os produtos (para gráficos/rankings), FAB em primeiro
     const fab      = (prods || []).filter(p => p.nome.toUpperCase().includes('FAB'))
@@ -172,6 +268,10 @@ export default function AdminDashboard() {
     setHistoricoPrecos(precs || [])
     setProducoes(prod || [])
     setFornPendentes((forn || []).filter(f => f.aprovado === false))
+    const todasLinhas = linhas || []
+    setTodasLinhasFicha(todasLinhas)
+    const todosProds = [...(fab || []), ...(outros || [])]
+    setCustoKgMetaMap(calcularCustoKgMeta(todosProds, todasLinhas, ins || []))
     // Restaura produto selecionado da sessão anterior ou usa o primeiro FAB
     const salvo = sessionStorage.getItem('dashboard_produto')
     const existe = fab.find(p => p.id === salvo)
@@ -214,9 +314,11 @@ export default function AdminDashboard() {
     const recentes = producoes.filter(p => p.produto_id === prod.id).slice(0, 10)
     if (!recentes.length) return null
     const mediaRend = recentes.reduce((a, p) => a + (p.rendimento || 0), 0) / recentes.length
+    const custoKgReal = recentes.reduce((a, p) => a + (p.custo_por_kg_pronto || 0), 0) / recentes.length
+    const custoKgMeta = custoKgMetaMap.get(prod.id) || 0
     const alerta = nivelAlerta(mediaRend, prod.meta_rendimento)
     const diagnostico = diagnosticar(recentes)
-    return { id: prod.id, nome: prod.nome, media: mediaRend, meta: prod.meta_rendimento, qtd: recentes.length, alerta, diagnostico }
+    return { id: prod.id, nome: prod.nome, media: mediaRend, meta: prod.meta_rendimento, qtd: recentes.length, alerta, diagnostico, custoKgReal, custoKgMeta }
   }).filter(Boolean).sort((a, b) => {
     // Ordena: dentro da meta primeiro (desc rendimento), depois fora (asc rendimento)
     const aFora = a.media < a.meta
@@ -240,7 +342,11 @@ export default function AdminDashboard() {
   const maioresBaixas  = variacaoPrecos.filter(v => v.variacao < 0).slice(0, 3)
 
   // ─── KPIs do produto selecionado ───
-  const metaDoProduto = produtos.find(p => p.id === produtoSelecionado)?.meta_rendimento || 70
+  const produtoAtual = produtos.find(p => p.id === produtoSelecionado)
+  const metaDoProduto = produtoAtual?.meta_rendimento || 70
+  const custoKgMetaProduto = custoKgMetaMap.get(produtoSelecionado) || 0
+  const custoKgRealProduto = producoesDoProduto[0]?.custo_por_kg_pronto || 0
+  const alertaCustoKg = custoKgMetaProduto > 0 ? nivelAlertaCusto(custoKgRealProduto, custoKgMetaProduto) : null
   const nomeProdutoSelecionado = produtos.find(p => p.id === produtoSelecionado)?.nome || '—'
   const producoesDoProduto = producoes.filter(p => p.produto_id === produtoSelecionado)
   const totalDoProduto = producoesDoProduto.length
@@ -288,7 +394,10 @@ export default function AdminDashboard() {
   const rendPorProduto = produtos.map(prod => {
     const prods = producoes.filter(p => p.produto_id === prod.id)
     const media = prods.length ? prods.reduce((a, p) => a + (p.rendimento || 0), 0) / prods.length : 0
-    return { nome: prod.nome, rendimento: parseFloat(media.toFixed(1)), meta: prod.meta_rendimento, qtd: prods.length }
+    const custoKgReal = prods.length ? prods.reduce((a, p) => a + (p.custo_por_kg_pronto || 0), 0) / prods.length : 0
+    const custoKgMeta = custoKgMetaMap.get(prod.id) || 0
+    const desvCusto = custoKgMeta > 0 ? parseFloat((((custoKgReal - custoKgMeta) / custoKgMeta) * 100).toFixed(1)) : null
+    return { nome: prod.nome, rendimento: parseFloat(media.toFixed(1)), meta: prod.meta_rendimento, qtd: prods.length, custoKgReal, custoKgMeta, desvCusto }
   }).filter(p => p.qtd > 0).sort((a, b) => b.rendimento - a.rendimento)
 
   // ─── Gráfico 3 ───
@@ -453,7 +562,9 @@ export default function AdminDashboard() {
 
       <div className="grid-metricas" style={{ marginBottom: '20px' }}>
         <MetricCard titulo="Produções registradas" valor={totalDoProduto} subtexto={nomeProdutoSelecionado} cor="var(--cor-info)" />
-        <MetricCard titulo="Custo médio/porção" valor={producoesDoProduto[0] ? `R$ ${parseFloat(producoesDoProduto[0].custo_porcao || 0).toFixed(2)}` : '—'} subtexto={`últimas ${ultimas5.length} produções`} cor="#a855f7" sparkline={sparkCusto} tendencia={tendCusto} />
+        <MetricCard titulo="Custo/kg última produção" valor={custoKgRealProduto > 0 ? `R$ ${custoKgRealProduto.toFixed(2)}` : '—'}
+          subtexto={alertaCustoKg ? `${alertaCustoKg.label} vs ficha (R$${custoKgMetaProduto.toFixed(2)})` : `meta da ficha: —`}
+          cor={alertaCustoKg?.cor || '#a855f7'} />
         <MetricCard titulo="Rendimento último" valor={producoesDoProduto[0] ? `${parseFloat(producoesDoProduto[0].rendimento || 0).toFixed(1)}%` : '—'} subtexto={`meta: ${metaDoProduto}%`} cor="var(--cor-sucesso)" sparkline={sparkRendimento} tendencia={tendRendimento} />
         <MetricCard titulo="Dentro da meta" valor={`${dentroMeta}/${totalDoProduto}`} subtexto={`${pctDentro}% das produções`} cor={pctDentro >= 70 ? 'var(--cor-sucesso)' : 'var(--cor-perigo)'} />
       </div>
